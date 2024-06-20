@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "218635745297",
+    "project_id": "potel-e4fc2",
+    "storage_bucket": "potel-e4fc2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218635745297:android:4fa093648856fefd61d9b0",
+        "android_client_info": {
+          "package_name": "com.davidvictor.potel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "218635745297-vlv2nos8pn428pkuma89o31bfpvg08qa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiOSIDFm-rJxRwl9_Ltpwi-POolwSmzAo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "218635745297-vlv2nos8pn428pkuma89o31bfpvg08qa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
