@@ -9,6 +9,7 @@ import {
   updateCategory,
 } from "../hooks/reducers/categorySlice"; // Adjust the path as needed
 import dayjs from "dayjs";
+import * as Haptics from "expo-haptics";
 
 const CategoryList = () => {
   const dispatch = useDispatch();
@@ -26,19 +27,19 @@ const CategoryList = () => {
 
     if (currentHour >= 0 && currentHour < 6) {
       timeOfDay = "Midnight";
-      iconName = "moon";
+      iconName = "🌙";
     } else if (currentHour >= 6 && currentHour < 12) {
       timeOfDay = "Morning";
-      iconName = "cloud-sun";
+      iconName = "🌤️";
     } else if (currentHour >= 12 && currentHour < 17) {
       timeOfDay = "Afternoon";
-      iconName = "sun";
+      iconName = "☀️";
     } else if (currentHour >= 17 && currentHour < 20) {
       timeOfDay = "Evening";
-      iconName = "cloud-moon";
+      iconName = "🌓";
     } else {
       timeOfDay = "Night";
-      iconName = "moon";
+      iconName = "🌜";
     }
 
     dispatch(
@@ -55,6 +56,7 @@ const CategoryList = () => {
       dispatch(setExpandedId(id));
     }
     dispatch(setSelectedCategory(categoryName));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
   const addNewCategory = () => {
     const newCategory = {
@@ -83,6 +85,7 @@ const CategoryList = () => {
         horizontal
         contentContainerStyle={styles.listContainer}
         showsHorizontalScrollIndicator={false}
+        scrollEnabled={false}
       />
       {/* <Button title="Add Category" onPress={addCategory} />
       <Text style={styles.selectedCategoryText}>

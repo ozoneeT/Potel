@@ -96,13 +96,11 @@ const icons = [
 ];
 
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import React, { memo } from "react";
 import { Link, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet"; // Adjust import as per your library
-import { MaterialCommunityIcons } from "@expo/vector-icons"; // Assuming you're using Expo icons
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"; // Assuming you're using Expo icons
 import { useRef } from "react";
 import { setTaskIcon } from "../../hooks/reducers/taskSlice";
 import { FlashList } from "@shopify/flash-list";
@@ -111,70 +109,74 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import { Platform } from "react-native";
+import ActionSheet, {
+  SheetManager,
+  registerSheet,
+} from "react-native-actions-sheet";
 
-const AddTaskIcon = () => {
-  const router = useRouter();
+const AddTaskIcon = memo((props) => {
   const dispatch = useDispatch();
 
   const handleSelectIcon = (iconName) => {
     dispatch(setTaskIcon(iconName));
-    router.dismiss();
+    SheetManager.hide("addtaskicon");
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        Platform.OS === "android"
-          ? { marginTop: hp(18) }
-          : { marginTop: hp(30) },
-      ]}
-    >
-      <View style={styles.iconHolder} />
-      <Pressable
-        onPress={() => router.dismiss()}
-        style={{
-          left: "87%",
-          padding: 10,
-          position: "absolute",
+    <ActionSheet id={props.sheetId}>
+      <View style={[{ height: "80%" }]}>
+        <View style={styles.iconHolder} />
+        <Pressable
+          onPress={() => SheetManager.hide("addtaskicon")}
+          style={{
+            left: "87%",
+            padding: 10,
+            position: "absolute",
 
-          borderRadius: 20,
-        }}
-      >
-        <Text>❌</Text>
-      </Pressable>
-      <View style={{ flex: 1, borderRadius: 20 }}>
-        <FlashList
-          data={icons}
-          keyExtractor={(item) => item}
-          estimatedItemSize={300}
-          contentContainerStyle={styles.iconGrid}
-          numColumns={5}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handleSelectIcon(item)}
-              style={styles.iconButton}
-            >
-              <MaterialCommunityIcons name={item} size={30} color="black" />
-            </Pressable>
-          )}
-        />
+            borderRadius: 20,
+          }}
+        ></Pressable>
+        <View style={{ padding: 20 }}>
+          <Pressable onPress={() => SheetManager.hide("addtaskicon")}>
+            <AntDesign name="back" size={24} color="black" />
+          </Pressable>
+          <Text
+            style={{
+              fontSize: 27,
+              marginTop: 10,
+              fontFamily: "MontserratBold",
+            }}
+          >
+            Change Icon
+          </Text>
+        </View>
+        <View style={{ height: "150%" }}>
+          <FlashList
+            data={icons}
+            keyExtractor={(item) => item}
+            estimatedItemSize={300}
+            contentContainerStyle={styles.iconGrid}
+            numColumns={5}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => handleSelectIcon(item)}
+                style={styles.iconButton}
+              >
+                <MaterialCommunityIcons name={item} size={30} color="black" />
+              </Pressable>
+            )}
+          />
+        </View>
       </View>
-    </View>
+    </ActionSheet>
   );
-};
-
+});
+registerSheet("addtaskicon", AddTaskIcon);
 export default AddTaskIcon;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
   iconGrid: {
-    padding: 16,
+    paddingHorizontal: 8,
   },
   iconButton: {
     width: 50,
@@ -187,7 +189,7 @@ const styles = StyleSheet.create({
   },
   iconHolder: {
     width: 100,
-    height: 10,
+    height: 5,
     borderRadius: 40,
     backgroundColor: "black",
     zIndex: 1,

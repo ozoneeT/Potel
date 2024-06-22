@@ -23,7 +23,6 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
-import { create } from "react-native-platform-stylesheet";
 
 import {
   GestureDetector,
@@ -445,7 +444,8 @@ export default function Onboarding() {
     </>
   );
 }
-const styles = create({
+
+const styles = StyleSheet.create({
   page: {
     // alignItems: 'center',
     flex: 1,
@@ -563,9 +563,7 @@ const styles = create({
     paddingHorizontal: 25,
     marginLeft: "auto",
     marginTop: hp(5),
-    ios: {
-      marginTop: hp(1),
-    },
+    marginTop: hp(1),
     borderRadius: 10,
     borderColor: "#fff",
     borderWidth: 2,
@@ -580,7 +578,7 @@ const styles = create({
     position: "absolute",
     left: 0,
     marginTop: hp(6),
-    ios: { marginTop: hp(1) },
+    marginTop: hp(1),
     zIndex: 100,
   },
   modal: {

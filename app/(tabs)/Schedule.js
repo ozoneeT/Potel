@@ -110,7 +110,8 @@ const App = () => {
         (date) => date === today.format("YYYY-MM-DD")
       );
       if (todayIndex !== -1) {
-        const initialOffset = todayIndex * itemWidth - 2 * itemWidth; // Positioning today as the 3rd item
+        const dayOfWeek = today.isoWeekday() - 1; // Get the day of the week (0-6, where 0 is Monday)
+        const initialOffset = todayIndex * itemWidth - dayOfWeek * itemWidth; // Positioning today in its normal position within the week
         setTimeout(() => {
           flatListRef.current?.scrollToOffset({
             offset: initialOffset,
@@ -121,6 +122,25 @@ const App = () => {
       }
     }
   }, [dates, today]);
+
+  const handleTodayClick = useCallback(() => {
+    const todayIndex = dates.findIndex(
+      (date) => date === today.format("YYYY-MM-DD")
+    );
+    if (todayIndex !== -1) {
+      const dayOfWeek = today.isoWeekday() - 1; // Get the day of the week (0-6, where 0 is Monday)
+      const initialOffset = todayIndex - dayOfWeek; // Calculate the correct index to scroll to
+      if (initialOffset >= 0 && initialOffset < dates.length) {
+        flatListRef.current?.scrollToIndex({
+          index: initialOffset,
+          animated: true,
+        });
+      } else {
+        console.warn(`Calculated index ${initialOffset} is out of range`);
+      }
+    }
+    dispatch(setSelectedDate(today.format("YYYY-MM-DD")));
+  }, [today, dates, dispatch]);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }) => {
@@ -148,19 +168,6 @@ const App = () => {
     },
     [dispatch]
   );
-
-  const handleTodayClick = useCallback(() => {
-    const todayIndex = dates.findIndex(
-      (date) => date === today.format("YYYY-MM-DD")
-    );
-    if (todayIndex !== -1) {
-      flatListRef.current?.scrollToIndex({
-        index: todayIndex,
-        animated: true,
-      });
-    }
-    dispatch(setSelectedDate(today.format("YYYY-MM-DD")));
-  }, [today, dates, dispatch]);
 
   const getFriendlyDate = (date) => {
     const selected = dayjs(date);

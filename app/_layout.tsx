@@ -14,6 +14,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import store from "../hooks/store";
 import { Provider } from "react-redux";
+import { SheetProvider } from "react-native-actions-sheet";
+import "./sheets"; // here
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -36,7 +38,7 @@ const MainLayout = () => {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="Taskform"
-        options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        options={{ animation: "slide_from_bottom" }}
       ></Stack.Screen>
     </Stack>
   );
@@ -80,15 +82,17 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <GestureHandlerRootView>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <AuthContextProvider>
-              <MainLayout />
-            </AuthContextProvider>
-          </ThemeProvider>
-        </GestureHandlerRootView>
+        <SheetProvider>
+          <GestureHandlerRootView>
+            <ThemeProvider
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+            >
+              <AuthContextProvider>
+                <MainLayout />
+              </AuthContextProvider>
+            </ThemeProvider>
+          </GestureHandlerRootView>
+        </SheetProvider>
       </SafeAreaProvider>
     </Provider>
   );

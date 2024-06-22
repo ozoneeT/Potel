@@ -1,11 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialCategories = [
-  { id: "1", iconName: "at", categoryName: "all" },
-  { id: "2", iconName: "infinity", categoryName: "Routine" },
-  { id: "3", iconName: "people-group", categoryName: "Collaboration" },
-  { id: "4", iconName: "heart-pulse", categoryName: "Self-Care" },
-  { id: "5", iconName: "briefcase", categoryName: "Project" },
+  { id: "1", iconName: "✨", categoryName: "all" },
+  { id: "2", iconName: "♾️", categoryName: "Routine" },
+  { id: "3", iconName: "🌐", categoryName: "Collaboration" },
+  { id: "4", iconName: "💖", categoryName: "Self-Care" },
+  { id: "5", iconName: "💼", categoryName: "Project" },
 ];
 
 const categoriesSlice = createSlice({

@@ -23,10 +23,6 @@ import {
   AntDesign,
   Octicons,
 } from "@expo/vector-icons";
-import BottomSheet, {
-  BottomSheetScrollView,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
 import { useSelector, useDispatch } from "react-redux";
 import {
   setTaskIcon,
@@ -35,7 +31,7 @@ import {
 } from "../../hooks/reducers/taskSlice";
 import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "expo-router";
-
+import { SheetManager } from "react-native-actions-sheet";
 const listofColors = [
   {
     id: 1,
@@ -74,11 +70,80 @@ const Index = () => {
   const taskColor = useSelector((state) => state.task.taskColor);
   const [typing, setTyping] = useState(false);
   const router = useNavigation();
+  const inputRef = useRef(null);
+  const repeatDays = useSelector((state) => state.repeatDays.repeatDays);
+  const selectedDays = useSelector((state) => state.monthlyDays.selectedDays);
+  const selectedIndex = useSelector((state) => state.repeatIndex.repeatIndex);
+  const selectedDay = useSelector((state) => state.intervalDays.selectedDay);
+  const [selectRepeat, setSelectrepeat] = useState();
+
+  useEffect(() => {
+    const Selectingrepeat = () => {
+      if (selectedIndex == 0) {
+        setSelectrepeat(`${renderSelectedDays()}`);
+      } else if (selectedIndex == 1) {
+        setSelectrepeat(`Every month On ${formatSelectedDays()}`);
+      } else if (selectedIndex == 2) {
+        setSelectrepeat(`Every ${selectedDay} days`);
+      }
+    };
+    Selectingrepeat();
+  }, [selectedIndex, selectedDays, selectedDay, repeatDays]);
+
+  const renderSelectedDays = () => {
+    const weekDaysMap = {
+      Sunday: "Sun",
+      Monday: "Mon",
+      Tuesday: "Tue",
+      Wednesday: "Wed",
+      Thursday: "Thu",
+      Friday: "Fri",
+      Saturday: "Sat",
+    };
+
+    const weekDays = Object.keys(weekDaysMap);
+
+    if (repeatDays.length === weekDays.length) {
+      return "EveryDay";
+    } else {
+      const sortedRepeatDays = [...repeatDays].sort(
+        (a, b) => weekDays.indexOf(a) - weekDays.indexOf(b)
+      );
+
+      return sortedRepeatDays.map((day) => weekDaysMap[day]).join(", ");
+    }
+  };
+
+  const formatSelectedDays = () => {
+    if (selectedDays.length === 0) {
+      return "";
+    } else if (selectedDays.length === 1) {
+      return `${selectedDays[0]}${getOrdinalSuffix(selectedDays[0])}`;
+    } else {
+      const formattedDays = selectedDays.map(
+        (day) => `${day}${getOrdinalSuffix(day)}`
+      );
+      const lastDay = formattedDays.pop();
+      return `${formattedDays.join(", ")} and ${lastDay}`;
+    }
+  };
+
+  const getOrdinalSuffix = (day) => {
+    if (day === 1 || day === 21 || day === 31) return "st";
+    if (day === 2 || day === 22) return "nd";
+    if (day === 3 || day === 23) return "rd";
+    return "th";
+  };
 
   const handleTyping = (value) => {
     setTyping(true);
     dispatch(setTaskName(value));
   };
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
   return (
     <Pressable
       onPress={() => Keyboard.dismiss()}
@@ -89,7 +154,8 @@ const Index = () => {
         style={styles.keyboardAvoidingView}
       >
         <View style={styles.taskContainer}>
-          <Pressable onPress={() => router.navigate("AddTaskIcon")}>
+          {/* <Pressable onPress={() => SheetManager.show("addtaskicon")}> */}
+          <Pressable onPress={() => SheetManager.show("addtaskicon")}>
             <View
               style={[
                 styles.addTaskIcon,
@@ -113,6 +179,7 @@ const Index = () => {
             }}
           >
             <TextInput
+              ref={inputRef}
               placeholder="New Task"
               value={taskName}
               onChange={() => setTyping(true)}
@@ -120,9 +187,15 @@ const Index = () => {
               style={styles.TaskInput}
               placeholderTextColor={"#a9a9a94d"}
               maxLength={50}
-              numberOfLines={2}
-              multiline
+              multiline={true}
               width={"90%"}
+              blurOnSubmit={true}
+              onSubmitEditing={() => {
+                if (inputRef.current) {
+                  inputRef.current.blur();
+                }
+              }}
+              returnKeyType="done"
             />
             {typing ? (
               <Text
@@ -205,17 +278,25 @@ const Index = () => {
       <View style={styles.taskInfoList}>
         <Pressable
           style={styles.taskInfo}
+          // onPress={() => SheetManager.show("repeat")}
           onPress={() => router.navigate("Repeat")}
         >
           <View style={[styles.taskwhenIcon, { backgroundColor: "#83f28f" }]}>
             <Ionicons name="repeat-outline" size={20} color="white" />
           </View>
           <View style={styles.taskWhen}>
-            <View>
+            <View style={{ width: "90%" }}>
               <Text>Repeat</Text>
-              <Text>EveryDay</Text>
+              <Text style={{ fontWeight: "bold" }}>{selectRepeat}</Text>
             </View>
-            <AntDesign name="right" size={20} color="black" />
+            <View
+              style={{
+                width: "10%",
+                alignItems: "flex-end",
+              }}
+            >
+              <AntDesign name="right" size={20} color="black" />
+            </View>
           </View>
         </Pressable>
 

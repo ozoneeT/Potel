@@ -15,6 +15,8 @@ import {
   ActivityIndicator,
   Modal,
   useColorScheme,
+  Pressable,
+  Keyboard,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -72,6 +74,8 @@ export default function SignIn() {
 
   const options = ["Login", "Register"];
   const [selectedOption, setSelectedOption] = useState("Login");
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [segments1] = useState(["Login", "Register"]);
 
   const [showFullTerms, setShowFullTerms] = useState(false);
 
@@ -936,47 +940,58 @@ export default function SignIn() {
     );
   };
 
+  const renderComponent = () => {
+    switch (selectedIndex) {
+      case 0:
+        return <LoginForm />;
+      case 1:
+        return <RegistrationForm />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <ThemedView
-      lightColor={Colors.light.primary}
-      darkColor={Colors.dark.background}
-      style={styles.loginContainer}
-    >
-      <Image
-        style={{ position: "absolute", width: "150%", top: -150 }}
-        source={LoginBack}
-      />
-      <SafeAreaView style={styles.logoContainer}>
-        <Button title="clear" onPress={() => clearAsyncStorage()}></Button>
-        <Image
-          style={styles.logo}
-          source={require("../assets/images/potel.png")}
-          resizeMode="contain"
-        />
-        <Text style={styles.PotelText}>POTEL</Text>
-        <Text style={styles.PotelSubtitle}>Stay Informed, Stay Productive</Text>
-      </SafeAreaView>
-      <View
-        style={[
-          styles.SegmentedControl,
-          { marginTop: heightPercentageToDP(1) },
-        ]}
+    <Pressable onPress={() => Keyboard.dismiss()} style={styles.loginContainer}>
+      <ThemedView
+        lightColor={Colors.light.primary}
+        darkColor={Colors.dark.background}
+        style={{ flex: 1 }}
       >
-        <SegmentedControl
-          options={options}
-          selectedOption={selectedOption}
-          onOptionPress={setSelectedOption}
-        ></SegmentedControl>
-      </View>
-      {/* Login form  */}
-      {selectedOption == "Login" && <LoginForm></LoginForm>}
+        <Image
+          style={{ position: "absolute", width: "150%", top: -150 }}
+          source={LoginBack}
+        />
+        <SafeAreaView style={styles.logoContainer}>
+          <Button title="clear" onPress={() => clearAsyncStorage()}></Button>
+          <Image
+            style={styles.logo}
+            source={require("../assets/images/potel.png")}
+            resizeMode="contain"
+          />
+          <Text style={styles.PotelText}>POTEL</Text>
+          <Text style={styles.PotelSubtitle}>
+            Stay Informed, Stay Productive
+          </Text>
+        </SafeAreaView>
+        <View style={[styles.SegmentedControl]}>
+          <View>
+            <SegmentedControl
+              segments={segments1}
+              onIndexChange={setSelectedIndex}
+            />
+          </View>
+        </View>
+        {/* Login form  */}
+        {selectedIndex == 0 && <LoginForm></LoginForm>}
 
-      {/* End of Login Form */}
+        {/* End of Login Form */}
 
-      {/* Registration start */}
+        {/* Registration start */}
 
-      <RegistrationForm></RegistrationForm>
-    </ThemedView>
+        <RegistrationForm></RegistrationForm>
+      </ThemedView>
+    </Pressable>
   );
 }
 
@@ -984,7 +999,7 @@ const styles = StyleSheet.create({
   loginContainer: {
     flex: 1,
   },
-  logo: { width: 90, height: 90, margin: 10 },
+  logo: { width: 90, height: 90 },
   logoContainer: {
     width: wp("100%"),
     alignItems: "center",
@@ -1041,6 +1056,8 @@ const styles = StyleSheet.create({
   registraionForm: {
     alignSelf: "center",
     marginBottom: 50,
+    height: "100%",
+    zIndex: 100,
   },
   formText: {
     color: "#575758",

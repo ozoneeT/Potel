@@ -34,7 +34,7 @@ const CategoryButton = ({ iconName, categoryName, isExpanded, onPress }) => {
       onPress={onPress}
       style={[styles.button, isExpanded && styles.expandedButton]}
     >
-      <FontAwesome6 name={iconName} size={20} color="black" />
+      <Text style={{ fontSize: 25 }}>{iconName}</Text>
       {isExpanded && (
         <Animated.View style={[styles.categoryNameContainer, animatedStyle]}>
           <Text style={styles.categoryNameText}>{categoryName}</Text>
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    padding: 8,
     borderRadius: 24,
     backgroundColor: "#f3f3f3",
     margin: 5,
@@ -57,8 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f3f3f3", // Change background color when expanded
   },
   categoryNameContainer: {
-    marginLeft: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     borderRadius: 24,
   },
   categoryNameText: {

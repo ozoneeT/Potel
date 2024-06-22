@@ -1,0 +1,2 @@
+import "./mysheet.tsx";
+export {};
