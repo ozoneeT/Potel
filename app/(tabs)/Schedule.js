@@ -110,7 +110,7 @@ const App = () => {
         (date) => date === today.format("YYYY-MM-DD")
       );
       if (todayIndex !== -1) {
-        const dayOfWeek = today.isoWeekday() - 1; // Get the day of the week (0-6, where 0 is Monday)
+        const dayOfWeek = today.isoWeekday(); // Get the day of the week (0-6, where 0 is Monday)
         const initialOffset = todayIndex * itemWidth - dayOfWeek * itemWidth; // Positioning today in its normal position within the week
         setTimeout(() => {
           flatListRef.current?.scrollToOffset({

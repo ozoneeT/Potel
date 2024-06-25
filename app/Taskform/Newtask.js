@@ -76,6 +76,12 @@ const Index = () => {
   const selectedIndex = useSelector((state) => state.repeatIndex.repeatIndex);
   const selectedDay = useSelector((state) => state.intervalDays.selectedDay);
   const [selectRepeat, setSelectrepeat] = useState();
+  const selectedCategory = useSelector(
+    (state) => state.categories.masterCategory
+  );
+  const repeatOccurence = useSelector(
+    (state) => state.repeatOccurence.repeatOccurence
+  );
 
   useEffect(() => {
     const Selectingrepeat = () => {
@@ -318,7 +324,7 @@ const Index = () => {
           <View style={[styles.taskWhen, {}]}>
             <View>
               <Text>Goal</Text>
-              <Text>1 Time Per day</Text>
+              <Text style={{ fontWeight: "bold" }}>{repeatOccurence}</Text>
             </View>
             <AntDesign name="right" size={20} color="black" />
           </View>
@@ -334,7 +340,9 @@ const Index = () => {
           <View style={[styles.taskWhen, { borderBottomWidth: 0 }]}>
             <View>
               <Text>Category</Text>
-              <Text>Routine</Text>
+              <Text style={{ fontWeight: "bold" }}>
+                {selectedCategory.iconName} {selectedCategory.categoryName}
+              </Text>
             </View>
             <AntDesign name="right" size={20} color="black" />
           </View>

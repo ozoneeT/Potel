@@ -1,191 +1,52 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @flow
- */
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { setmasterCategory } from "../../hooks/reducers/categorySlice";
+import { router } from "expo-router";
 
-import SegmentedControl from "@react-native-segmented-control/segmented-control";
-import React, { useEffect, useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useColorScheme,
-} from "react-native";
+const Category = () => {
+  const categories = useSelector((state) => state.categories.categories);
+  const expandedId = useSelector((state) => state.categories.expandedId);
+  const selectedCategory = useSelector(
+    (state) => state.categories.masterCategory
+  );
+  const dispatch = useDispatch();
 
-const App = () => {
-  const colorScheme = useColorScheme();
-  const [textColor, setTextColor] = useState("#000");
-  const [value, setValue] = useState("Unselected");
-  const [selectedIndex, setSelectedIndex] = useState(undefined);
-
-  useEffect(() => {
-    setTextColor(colorScheme === "dark" ? "#FFF" : "#000");
-  }, [colorScheme]);
-
-  const _onChange = (event) => {
-    setSelectedIndex(event.nativeEvent.selectedSegmentIndex);
-  };
-
-  const _onValueChange = (val) => {
-    setValue(val);
+  const categoryPressed = (categoryName, iconName) => {
+    dispatch(setmasterCategory({ categoryName, iconName }));
+    router.back();
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colorScheme === "dark" ? "#000" : "#FFF" },
-      ]}
-    >
-      <View style={styles.segmentContainer}>
-        <Text style={[styles.text, { color: textColor }]}>
-          Segmented controls can have values and images
-        </Text>
-        <SegmentedControl
-          values={["One", "Two", require("../../assets/images/googleIcon.png")]}
-        />
-      </View>
-      <View style={styles.segmentSection}>
-        <SegmentedControl
-          values={[
-            "One",
-            "Two",
-            require("../../assets/images/googleIcon.png"),
-            "Three",
-            "Four",
-            "Five",
-          ]}
-        />
-      </View>
-      <View style={styles.segmentSection}>
-        <Text style={[styles.text, { color: textColor }]}>
-          Segmented controls can have pre-selected values
-        </Text>
-        <SegmentedControl values={["One", "Two"]} selectedIndex={0} />
-      </View>
-      <View style={styles.segmentSection}>
-        <Text style={[styles.text, { color: textColor }]}>
-          Segmented controls can be momentary
-        </Text>
-        <SegmentedControl values={["One", "Two"]} momentary={true} />
-      </View>
-      <View style={styles.segmentSection}>
-        <Text style={[styles.text, { color: textColor }]}>
-          Segmented controls can be disabled
-        </Text>
-        <SegmentedControl
-          enabled={false}
-          values={["One", "Two"]}
-          selectedIndex={1}
-        />
-      </View>
-      <View style={styles.segmentContainer}>
-        <Text style={[styles.text, { color: textColor }]}>
-          Custom colors can be provided
-        </Text>
-        <SegmentedControl
-          tintColor="#ff0000"
-          values={["One", "Two", "Three", "Four"]}
-          selectedIndex={0}
-          backgroundColor="#0000ff"
-        />
-      </View>
-      <View style={styles.segmentContainer}>
-        <SegmentedControl
-          tintColor="#00ff00"
-          values={["One", "Two", "Three"]}
-          selectedIndex={1}
-        />
-      </View>
-      <View style={styles.segmentSection}>
-        <SegmentedControl
-          fontStyle={{ color: "#ff00ff" }}
-          activeFontStyle={{ color: "blue" }}
-          values={["One", "Two"]}
-          selectedIndex={1}
-        />
-      </View>
-      <View style={styles.segmentContainer}>
-        <Text style={[styles.text, { color: textColor }]}>
-          Segmented controls can have defined fontSize
-        </Text>
-        <View style={styles.segmentContainer}>
-          <SegmentedControl
-            values={["One", "Two"]}
-            style={{ height: 80 }}
-            fontStyle={styles.fontStyle}
-          />
-        </View>
-        <SegmentedControl
-          values={["One", "Two"]}
-          tintColor="red"
-          style={{ height: 80 }}
-          fontStyle={{
-            fontFamily: "Optima",
-            fontSize: 32,
-          }}
-          activeFontStyle={styles.activeFontStyle}
-        />
-      </View>
-      <View>
-        <Text style={[styles.text, { color: textColor }]}>
-          Custom colors can be provided
-        </Text>
-        <View style={styles.segmentContainer}>
-          <SegmentedControl
-            values={["One", "Two", "Three"]}
-            selectedIndex={selectedIndex}
-            onChange={_onChange}
-            onValueChange={_onValueChange}
-          />
-        </View>
-        <Text style={[styles.text, { color: textColor }]}>
-          Value: {value} Index: {selectedIndex}
-        </Text>
-      </View>
-
-      <View>
-        <Text style={[styles.text, { color: textColor }]}>
-          Appearance value can be provided
-        </Text>
-        <View style={styles.segmentContainer}>
-          <SegmentedControl
-            appearance="light"
-            values={["One", "Two", "Three"]}
-            selectedIndex={1}
-          />
-        </View>
-        <View style={styles.segmentContainer}>
-          <SegmentedControl
-            appearance="dark"
-            values={["One", "Two", "Three"]}
-            selectedIndex={2}
-          />
-        </View>
-      </View>
-    </ScrollView>
+    <View>
+      <FlatList
+        data={categories}
+        contentContainerStyle={{ marginTop: 40 }}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() => categoryPressed(item.categoryName, item.iconName)}
+            style={{
+              backgroundColor: "lightgrey",
+              padding: 20,
+              margin: 10,
+              borderRadius: 25,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ marginRight: 10 }}>{item.iconName}</Text>
+            <Text>{item.categoryName}</Text>
+          </Pressable>
+        )}
+        keyExtractor={(item) => item.id}
+      />
+      <Text>
+        {selectedCategory.iconName} {selectedCategory.categoryName}
+      </Text>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  text: {
-    fontSize: 14,
-    textAlign: "center",
-    fontWeight: "500",
-    margin: 10,
-  },
-  segmentContainer: {
-    marginBottom: 10,
-  },
-  segmentSection: {
-    marginBottom: 25,
-  },
-  container: {
-    paddingTop: 80,
-  },
-});
+export default Category;
 
-export default App;
+const styles = StyleSheet.create({});

@@ -7,6 +7,7 @@ const initialCategories = [
   { id: "4", iconName: "💖", categoryName: "Self-Care" },
   { id: "5", iconName: "💼", categoryName: "Project" },
 ];
+const masterCategory = { id: "1", iconName: "✨", categoryName: "all" };
 
 const categoriesSlice = createSlice({
   name: "categories",
@@ -14,8 +15,15 @@ const categoriesSlice = createSlice({
     categories: initialCategories,
     expandedId: "1", // Initial expanded category
     selectedCategory: "All", // Initial selected category
+    masterCategory: masterCategory, // Initial selected category
   },
   reducers: {
+    setmasterCategory: (state, action) => {
+      state.masterCategory = {
+        categoryName: action.payload.categoryName,
+        iconName: action.payload.iconName,
+      };
+    },
     setCategories: (state, action) => {
       state.categories = action.payload;
     },
@@ -25,6 +33,7 @@ const categoriesSlice = createSlice({
     setSelectedCategory: (state, action) => {
       state.selectedCategory = action.payload;
     },
+
     addCategory: (state, action) => {
       state.categories.push(action.payload);
     },
@@ -46,6 +55,7 @@ export const {
   setCategories,
   setExpandedId,
   setSelectedCategory,
+  setmasterCategory,
   addCategory,
   updateCategory,
 } = categoriesSlice.actions;
