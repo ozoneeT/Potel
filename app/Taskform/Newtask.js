@@ -28,10 +28,17 @@ import {
   setTaskIcon,
   setTaskColor,
   setTaskName,
+  setRepeat,
+  addTask,
+  resetTaskDetails,
 } from "../../hooks/reducers/taskSlice";
 import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "expo-router";
 import { SheetManager } from "react-native-actions-sheet";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { setStartDate, setEndDate } from "../../hooks/reducers/taskSlice";
+import { format, isToday, isYesterday, isTomorrow } from "date-fns";
+import { ScrollView } from "react-native";
 const listofColors = [
   {
     id: 1,
@@ -64,10 +71,6 @@ const listofColors = [
 ];
 
 const Index = () => {
-  const taskName = useSelector((state) => state.task.taskName);
-  const dispatch = useDispatch();
-  const taskIcon = useSelector((state) => state.task.taskIcon);
-  const taskColor = useSelector((state) => state.task.taskColor);
   const [typing, setTyping] = useState(false);
   const router = useNavigation();
   const inputRef = useRef(null);
@@ -76,21 +79,25 @@ const Index = () => {
   const selectedIndex = useSelector((state) => state.repeatIndex.repeatIndex);
   const selectedDay = useSelector((state) => state.intervalDays.selectedDay);
   const [selectRepeat, setSelectrepeat] = useState();
-  const selectedCategory = useSelector(
-    (state) => state.categories.masterCategory
-  );
-  const repeatOccurence = useSelector(
-    (state) => state.repeatOccurence.repeatOccurence
-  );
-
+  const selectedCategory = useSelector((state) => state.task.masterCategory);
+  const repeatOccurence = useSelector((state) => state.task.repeatOccurence);
+  const remindingTime = useSelector((state) => state.task.remindingTime);
+  const reminderEnabled = useSelector((state) => state.task.reminderEnabled);
+  const startDate = useSelector((state) => state.task.startDate);
+  const endDate = useSelector((state) => state.task.endDate);
+  const taskName = useSelector((state) => state.task.taskName);
+  const taskIcon = useSelector((state) => state.task.taskIcon);
+  const taskColor = useSelector((state) => state.task.taskColor);
+  const repeat = useSelector((state) => state.task.repeat);
+  const masterCategory = useSelector((state) => state.task.masterCategory);
   useEffect(() => {
     const Selectingrepeat = () => {
       if (selectedIndex == 0) {
-        setSelectrepeat(`${renderSelectedDays()}`);
+        dispatch(setRepeat(`${renderSelectedDays()}`));
       } else if (selectedIndex == 1) {
-        setSelectrepeat(`Every month On ${formatSelectedDays()}`);
+        dispatch(setRepeat(`Every month On ${formatSelectedDays()}`));
       } else if (selectedIndex == 2) {
-        setSelectrepeat(`Every ${selectedDay} days`);
+        dispatch(setRepeat(`Every ${selectedDay} days`));
       }
     };
     Selectingrepeat();
@@ -150,240 +157,349 @@ const Index = () => {
       inputRef.current.focus();
     }
   }, []);
+
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const handleDateChange = useCallback((event, selectedDate) => {
+    if (Platform.OS === "android") {
+      setDatePickerVisible(false);
+    }
+    if (event.type === "set") {
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      dispatch(setStartDate(formattedDate));
+    }
+  });
+
+  const displayDate = () => {
+    const date = new Date(startDate);
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    if (isTomorrow(date)) return "Tomorrow";
+    return format(date, "EEEE, MMMM d, yyyy");
+  };
+
+  const handleAddTask = () => {
+    const newTask = {
+      taskName,
+      taskIcon,
+      taskColor,
+      repeat,
+      repeatOccurence,
+      startDate,
+      endDate,
+      masterCategory,
+      remindingTime,
+      reminderEnabled,
+    };
+
+    dispatch(addTask(newTask));
+    dispatch(resetTaskDetails());
+    router.goBack();
+  };
+
   return (
     <Pressable
       onPress={() => Keyboard.dismiss()}
       style={[styles.container, { backgroundColor: taskColor }]}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoidingView}
-      >
-        <View style={styles.taskContainer}>
-          {/* <Pressable onPress={() => SheetManager.show("addtaskicon")}> */}
-          <Pressable onPress={() => SheetManager.show("addtaskicon")}>
-            <View
-              style={[
-                styles.addTaskIcon,
-                { backgroundColor: "black", padding: 5, borderRadius: 10 },
-              ]}
+      <ScrollView>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
+        >
+          <View style={styles.taskContainer}>
+            {/* <Pressable onPress={() => SheetManager.show("addtaskicon")}> */}
+            <Pressable onPress={() => SheetManager.show("addtaskicon")}>
+              <View
+                style={[
+                  styles.addTaskIcon,
+                  { backgroundColor: "black", padding: 5, borderRadius: 10 },
+                ]}
+              >
+                <View>
+                  <MaterialCommunityIcons
+                    name={taskIcon}
+                    size={50}
+                    color="white"
+                  />
+                </View>
+              </View>
+            </Pressable>
+            <Pressable
+              style={{
+                alignSelf: "flex-end",
+                position: "absolute",
+                right: 20,
+                top: 10,
+              }}
+              onPress={handleAddTask}
             >
-              <View>
-                <MaterialCommunityIcons
-                  name={taskIcon}
-                  size={50}
-                  color="white"
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "300",
+                  fontFamily: "PoppinsMedium",
+                }}
+              >
+                Create
+              </Text>
+            </Pressable>
+            <Pressable
+              style={{
+                alignSelf: "flex-end",
+                position: "absolute",
+                left: 20,
+                top: 5,
+                padding: 10,
+              }}
+              onPress={() => router.goBack()}
+            >
+              <AntDesign name="back" size={24} color="black" />
+            </Pressable>
+            <View
+              style={{
+                width: "100%",
+                marginVertical: 10,
+                alignItems: "center",
+              }}
+            >
+              <TextInput
+                ref={inputRef}
+                placeholder="New Task"
+                value={taskName}
+                onChange={() => setTyping(true)}
+                onChangeText={(value) => handleTyping(value)}
+                style={styles.TaskInput}
+                placeholderTextColor={"#a9a9a94d"}
+                maxLength={50}
+                multiline={true}
+                width={"90%"}
+                blurOnSubmit={true}
+                onSubmitEditing={() => {
+                  if (inputRef.current) {
+                    inputRef.current.blur();
+                  }
+                }}
+                returnKeyType="done"
+              />
+              {typing ? (
+                <Text
+                  style={{
+                    color: "#a9a9a94d",
+                    fontSize: 20,
+                    fontFamily: "InterBold",
+                  }}
+                >
+                  {taskName.length}/50
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    color: "#a9a9a94d",
+                    fontSize: 15,
+                    fontFamily: "InterBold",
+                  }}
+                >
+                  Tap to rename
+                </Text>
+              )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+        <View
+          style={{
+            marginTop: 20,
+            alignItems: "center",
+            height: hp(5),
+          }}
+        >
+          <FlatList
+            data={listofColors}
+            horizontal
+            scrollEnabled={false}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <>
+                {item.color === taskColor && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      zIndex: 10,
+                      alignSelf: "center",
+                      top: hp(0.7),
+                      left: hp(2),
+                    }}
+                  >
+                    <Ionicons name="checkmark" size={18} color="gray" />
+                  </View>
+                )}
+                <Pressable
+                  onPress={() => dispatch(setTaskColor(item.color))}
+                  style={[
+                    {
+                      height: 30,
+                      width: 30,
+                      backgroundColor: item.color,
+                      borderRadius: 20,
+                      borderWidth: 2,
+                      marginHorizontal: 10,
+                      borderColor: "#ffffff",
+                      shadowColor: "#000000",
+                      shadowOffset: {
+                        width: 1,
+                        height: 1,
+                      },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 2,
+                      elevation: 5,
+                      marginBottom: 20,
+                    },
+                  ]}
                 />
+              </>
+            )}
+          />
+        </View>
+        <View style={styles.taskInfoList}>
+          <Pressable
+            style={styles.taskInfo}
+            // onPress={() => SheetManager.show("repeat")}
+            onPress={() => router.navigate("Repeat")}
+          >
+            <View style={[styles.taskwhenIcon, { backgroundColor: "#83f28f" }]}>
+              <Ionicons name="repeat-outline" size={20} color="white" />
+            </View>
+            <View style={styles.taskWhen}>
+              <View style={{ width: "90%" }}>
+                <Text>Repeat</Text>
+                <Text style={{ fontWeight: "bold" }}>{repeat}</Text>
+              </View>
+              <View
+                style={{
+                  width: "10%",
+                  alignItems: "flex-end",
+                }}
+              >
+                <AntDesign name="right" size={20} color="black" />
               </View>
             </View>
           </Pressable>
-          <View
-            style={{
-              width: "100%",
-              marginVertical: 10,
-              alignItems: "center",
-            }}
+
+          <Pressable
+            onPress={() => router.navigate("Goal")}
+            style={[
+              styles.taskInfo,
+              {
+                borderTopWidth: 0.17,
+                borderTopColor: "ligthgray",
+                borderBottomColor: "ligthgray",
+                borderBottomWidth: 0.17,
+              },
+            ]}
           >
-            <TextInput
-              ref={inputRef}
-              placeholder="New Task"
-              value={taskName}
-              onChange={() => setTyping(true)}
-              onChangeText={(value) => handleTyping(value)}
-              style={styles.TaskInput}
-              placeholderTextColor={"#a9a9a94d"}
-              maxLength={50}
-              multiline={true}
-              width={"90%"}
-              blurOnSubmit={true}
-              onSubmitEditing={() => {
-                if (inputRef.current) {
-                  inputRef.current.blur();
-                }
-              }}
-              returnKeyType="done"
-            />
-            {typing ? (
-              <Text
-                style={{
-                  color: "#a9a9a94d",
-                  fontSize: 20,
-                  fontFamily: "InterBold",
-                }}
-              >
-                {taskName.length}/50
-              </Text>
-            ) : (
-              <Text
-                style={{
-                  color: "#a9a9a94d",
-                  fontSize: 15,
-                  fontFamily: "InterBold",
-                }}
-              >
-                Tap to rename
-              </Text>
-            )}
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-      <View
-        style={{
-          marginTop: 20,
-          alignItems: "center",
-          height: hp(5),
-        }}
-      >
-        <FlatList
-          data={listofColors}
-          horizontal
-          scrollEnabled={false}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <>
-              {item.color === taskColor && (
-                <View
-                  style={{
-                    position: "absolute",
-                    zIndex: 10,
-                    alignSelf: "center",
-                    top: hp(0.7),
-                    left: hp(2),
-                  }}
-                >
-                  <Ionicons name="checkmark" size={18} color="gray" />
-                </View>
-              )}
-              <Pressable
-                onPress={() => dispatch(setTaskColor(item.color))}
-                style={[
-                  {
-                    height: 30,
-                    width: 30,
-                    backgroundColor: item.color,
-                    borderRadius: 20,
-                    borderWidth: 2,
-                    marginHorizontal: 10,
-                    borderColor: "#ffffff",
-                    shadowColor: "#000000",
-                    shadowOffset: {
-                      width: 1,
-                      height: 1,
-                    },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 2,
-                    elevation: 5,
-                    marginBottom: 20,
-                  },
-                ]}
-              />
-            </>
-          )}
-        />
-      </View>
-      <View style={styles.taskInfoList}>
-        <Pressable
-          style={styles.taskInfo}
-          // onPress={() => SheetManager.show("repeat")}
-          onPress={() => router.navigate("Repeat")}
-        >
-          <View style={[styles.taskwhenIcon, { backgroundColor: "#83f28f" }]}>
-            <Ionicons name="repeat-outline" size={20} color="white" />
-          </View>
-          <View style={styles.taskWhen}>
-            <View style={{ width: "90%" }}>
-              <Text>Repeat</Text>
-              <Text style={{ fontWeight: "bold" }}>{selectRepeat}</Text>
+            <View style={[styles.taskwhenIcon, { backgroundColor: "#3868d9" }]}>
+              <MaterialCommunityIcons name="target" size={20} color="white" />
             </View>
-            <View
-              style={{
-                width: "10%",
-                alignItems: "flex-end",
-              }}
-            >
+            <View style={[styles.taskWhen, {}]}>
+              <View>
+                <Text>Goal</Text>
+                <Text style={{ fontWeight: "bold" }}>{repeatOccurence}</Text>
+              </View>
               <AntDesign name="right" size={20} color="black" />
             </View>
-          </View>
-        </Pressable>
+          </Pressable>
 
-        <Pressable
-          onPress={() => router.navigate("Goal")}
-          style={[
-            styles.taskInfo,
-            {
-              borderTopWidth: 0.17,
-              borderTopColor: "ligthgray",
-              borderBottomColor: "ligthgray",
-              borderBottomWidth: 0.17,
-            },
-          ]}
-        >
-          <View style={[styles.taskwhenIcon, { backgroundColor: "#3868d9" }]}>
-            <MaterialCommunityIcons name="target" size={20} color="white" />
-          </View>
-          <View style={[styles.taskWhen, {}]}>
-            <View>
-              <Text>Goal</Text>
-              <Text style={{ fontWeight: "bold" }}>{repeatOccurence}</Text>
+          <Pressable
+            onPress={() => router.navigate("Category")}
+            style={styles.taskInfo}
+          >
+            <View style={[styles.taskwhenIcon, { backgroundColor: "#865e9c" }]}>
+              <AntDesign name="tags" size={20} color="white" />
             </View>
-            <AntDesign name="right" size={20} color="black" />
-          </View>
-        </Pressable>
+            <View style={[styles.taskWhen, { borderBottomWidth: 0 }]}>
+              <View>
+                <Text>Category</Text>
+                <Text style={{ fontWeight: "bold" }}>
+                  {selectedCategory.categoryName} {selectedCategory.iconName}
+                </Text>
+              </View>
+              <AntDesign name="right" size={20} color="black" />
+            </View>
+          </Pressable>
+        </View>
 
-        <Pressable
-          onPress={() => router.navigate("Category")}
-          style={styles.taskInfo}
-        >
-          <View style={[styles.taskwhenIcon, { backgroundColor: "#865e9c" }]}>
-            <AntDesign name="tags" size={20} color="white" />
-          </View>
-          <View style={[styles.taskWhen, { borderBottomWidth: 0 }]}>
-            <View>
-              <Text>Category</Text>
-              <Text style={{ fontWeight: "bold" }}>
-                {selectedCategory.iconName} {selectedCategory.categoryName}
-              </Text>
+        <View style={styles.taskInfoList}>
+          <Pressable
+            onPress={() => router.navigate("Reminder")}
+            style={[styles.taskInfo]}
+          >
+            <View style={[styles.taskwhenIcon, { backgroundColor: "#8134af" }]}>
+              <Ionicons name="notifications" size={20} color="white" />
             </View>
-            <AntDesign name="right" size={20} color="black" />
-          </View>
-        </Pressable>
-      </View>
+            <View style={[styles.taskWhen, { borderBottomWidth: 0 }]}>
+              <View>
+                <Text>Reminder</Text>
+                {reminderEnabled ? (
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Remind me at {remindingTime}
+                  </Text>
+                ) : (
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                    }}
+                  >
+                    No Reminder
+                  </Text>
+                )}
+              </View>
+              <AntDesign name="right" size={20} color="black" />
+            </View>
+          </Pressable>
+        </View>
 
-      <View style={styles.taskInfoList}>
-        <Pressable
-          onPress={() => router.navigate("Reminder")}
-          style={[styles.taskInfo]}
-        >
-          <View style={[styles.taskwhenIcon, { backgroundColor: "#8134af" }]}>
-            <Ionicons name="notifications" size={20} color="white" />
-          </View>
-          <View style={[styles.taskWhen, { borderBottomWidth: 0 }]}>
-            <View>
-              <Text>Reminder</Text>
-              <Text>9:00 AM</Text>
+        <View style={styles.taskInfoList}>
+          <Pressable
+            onPress={() => setDatePickerVisible(!datePickerVisible)}
+            style={[styles.taskInfo]}
+          >
+            <View style={[styles.taskwhenIcon, { backgroundColor: "#4194cb" }]}>
+              <Ionicons name="calendar-sharp" size={20} color="white" />
             </View>
-            <AntDesign name="right" size={20} color="black" />
-          </View>
-        </Pressable>
-      </View>
+            <View style={[styles.taskWhen]}>
+              <View>
+                <Text>START DATE</Text>
+                <Text style={{ fontWeight: "bold" }}>{displayDate()}</Text>
+              </View>
+              <AntDesign name="right" size={20} color="black" />
+            </View>
+          </Pressable>
+        </View>
 
-      <View style={styles.taskInfoList}>
-        <Pressable
-          onPress={() => router.navigate("Startdate")}
-          style={[styles.taskInfo]}
-        >
-          <View style={[styles.taskwhenIcon, { backgroundColor: "#4194cb" }]}>
-            <Ionicons name="calendar-sharp" size={20} color="white" />
+        {datePickerVisible && (
+          <View
+            style={{
+              backgroundColor: "#fff",
+              margin: 20,
+              borderRadius: 20,
+            }}
+          >
+            <DateTimePicker
+              style={{ padding: 20 }}
+              value={new Date(startDate)}
+              mode="date"
+              display="inline"
+              onChange={handleDateChange}
+            />
           </View>
-          <View style={[styles.taskWhen]}>
-            <View>
-              <Text>START DATE</Text>
-              <Text>Today</Text>
-            </View>
-            <AntDesign name="right" size={20} color="black" />
-          </View>
-        </Pressable>
-      </View>
+        )}
+      </ScrollView>
     </Pressable>
   );
 };

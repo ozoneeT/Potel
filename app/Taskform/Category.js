@@ -1,15 +1,12 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setmasterCategory } from "../../hooks/reducers/categorySlice";
+import { setmasterCategory } from "../../hooks/reducers/taskSlice";
 import { router } from "expo-router";
 
 const Category = () => {
   const categories = useSelector((state) => state.categories.categories);
-  const expandedId = useSelector((state) => state.categories.expandedId);
-  const selectedCategory = useSelector(
-    (state) => state.categories.masterCategory
-  );
+  const selectedCategory = useSelector((state) => state.task.masterCategory);
   const dispatch = useDispatch();
 
   const categoryPressed = (categoryName, iconName) => {

@@ -99,10 +99,8 @@ const App = () => {
   onethirdWidth = windowWidth / 3;
   const colorScheme = useColorScheme();
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const taskName = useSelector((state) => state.task.taskName);
-  const taskIcon = useSelector((state) => state.task.taskIcon);
-  const taskColor = useSelector((state) => state.task.taskColor);
   const router = useNavigation();
+  const tasks = useSelector((state) => state.task.tasks);
 
   useEffect(() => {
     if (!initialScrollDone.current) {
@@ -269,6 +267,22 @@ const App = () => {
 
   // End of Date Render Functions
 
+  const renderTaskItem = ({ item }) => (
+    <View style={[styles.taskItem, { backgroundColor: item.taskColor }]}>
+      <Text style={{ color: "red" }}>{item.taskName}</Text>
+      <Text>{item.remindingTime}</Text>
+      <Text>{item.taskIcon}</Text>
+      <Text>{item.taskColor}</Text>
+      <Text>{item.repeat}</Text>
+      <Text>{item.repeatOccurence}</Text>
+      <Text>{item.masterCategory.iconName}</Text>
+      <Text>{item.masterCategory.categoryName}</Text>
+      <Text>{item.startDate}</Text>
+      <Text>{item.endDate}</Text>
+      <Text>{item.reminderEnabled}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <View
@@ -339,6 +353,12 @@ const App = () => {
             onTouchCancel={hideDatePicker}
           />
         )}
+
+        <FlatList
+          data={tasks}
+          renderItem={renderTaskItem}
+          keyExtractor={(item, index) => index.toString()}
+        />
         <View style={styles.addTaskButton}>
           <Pressable onPress={() => router.navigate("Taskform")}>
             <AntDesign
@@ -348,9 +368,6 @@ const App = () => {
             />
           </Pressable>
         </View>
-        <Text>{taskColor}</Text>
-        <Text>{taskName}</Text>
-        <Text>{taskIcon}</Text>
         <CategoryList />
       </View>
     </View>

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { View, StyleSheet, Text, Platform } from "react-native";
-import { Picker } from "react-native-wheel-pick";
+import { Picker } from "@react-native-picker/picker";
 import {
   Incubator,
   WheelPicker,
@@ -9,7 +9,7 @@ import {
   Typography,
   Button,
 } from "react-native-ui-lib";
-import { setRepeatOccurence } from "@/hooks/reducers/repeatOccurence";
+import { setRepeatOccurence } from "@/hooks/reducers/taskSlice";
 import { useDispatch, useSelector } from "react-redux";
 
 const IosPicker = () => {
@@ -20,37 +20,43 @@ const IosPicker = () => {
     ["daily ", "weekly ", "monthly "],
   ];
 
-  const repeatOccurence = useSelector(
-    (state) => state.repeatOccurence.repeatOccurence
-  );
+  const repeatOccurence = useSelector((state) => state.task.repeatOccurence);
 
   const handlePickerChange = (value, index) => {
     const newrepeatOccurence = [...repeatOccurence];
     newrepeatOccurence[index] = value;
     dispatch(setRepeatOccurence(newrepeatOccurence));
   };
+
   return (
     <View style={styles.pickerContainer}>
       <Picker
-        style={styles.picker}
-        pickerData={pickerData[0]}
         selectedValue={repeatOccurence[0]}
         onValueChange={(value) => handlePickerChange(value, 0)}
-      />
+        style={[styles.picker, { width: 110 }]}
+      >
+        {pickerData[0].map((item) => (
+          <Picker.Item key={item} label={item} value={item} />
+        ))}
+      </Picker>
       <Picker
-        style={styles.picker}
-        pickerData={pickerData[1]}
         selectedValue={repeatOccurence[1]}
         onValueChange={(value) => handlePickerChange(value, 1)}
-      />
+        style={[styles.picker, { width: 120 }]}
+      >
+        {pickerData[1].map((item) => (
+          <Picker.Item key={item} label={item} value={item} />
+        ))}
+      </Picker>
       <Picker
-        style={styles.picker}
-        pickerData={pickerData[2]}
         selectedValue={repeatOccurence[2]}
         onValueChange={(value) => handlePickerChange(value, 2)}
-        itemStyle={{ color: "red", fontSize: 10 }}
-        color={"red"}
-      />
+        style={[styles.picker, { width: 150 }]}
+      >
+        {pickerData[2].map((item) => (
+          <Picker.Item key={item} label={item} value={item} />
+        ))}
+      </Picker>
     </View>
   );
 };
@@ -79,9 +85,7 @@ const AndriodPicker = () => {
     []
   );
 
-  const repeatOccurence = useSelector(
-    (state) => state.repeatOccurence.repeatOccurence
-  );
+  const repeatOccurence = useSelector((state) => state.task.repeatOccurence);
 
   const handleValueChange = (index, value) => {
     const updatedValues = [...repeatOccurence];
@@ -131,11 +135,7 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
   },
-  picker: {
-    backgroundColor: "white",
-    width: 120,
-    height: 215,
-  },
+  picker: {},
 });
 
 export default Goal;
