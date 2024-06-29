@@ -28,6 +28,7 @@ const initialState = {
   selectedDays: [1],
   startDate: format(new Date(), "yyyy-MM-dd"),
   endDate: format(new Date(), "yyyy-MM-dd"),
+  endDateEnabled: false,
   masterCategory: { id: "1", iconName: "✨", categoryName: "All" },
   remindingTime: "09:00 AM",
   reminderEnabled: false,
@@ -65,6 +66,9 @@ const taskSlice = createSlice({
     setEndDate: (state, action) => {
       state.endDate = action.payload;
     },
+    setendDateEnabled: (state, action) => {
+      state.endDateEnabled = action.payload;
+    },
     setmasterCategory: (state, action) => {
       state.masterCategory = {
         categoryName: action.payload.categoryName,
@@ -92,6 +96,7 @@ const taskSlice = createSlice({
         selectedDays: [...initialState.selectedDays],
         startDate: initialState.startDate,
         endDate: initialState.endDate,
+        endDateEnabled: initialState.endDateEnabled,
         masterCategory: { ...initialState.masterCategory },
         remindingTime: initialState.remindingTime,
         reminderEnabled: initialState.reminderEnabled,
@@ -115,6 +120,7 @@ export const {
   addTask,
   resetTaskDetails,
   setrepeatType,
+  setendDateEnabled,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

@@ -4,7 +4,6 @@ import { StyleSheet, Text, View, Pressable } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useDispatch, useSelector } from "react-redux";
 import { setStartDate } from "../../hooks/reducers/taskSlice";
-import { format, isToday, isYesterday, isTomorrow } from "date-fns";
 
 const StartDate = () => {
   const [datePickerVisible, setDatePickerVisible] = useState(true);

@@ -5,11 +5,6 @@ import selectedDateReducer from "./selectedDaySlice";
 import categorySlice from "./categorySlice";
 import taskSlice from "./taskSlice";
 import repeatDaysSlice from "./repeatDaysSlice";
-import repeatmonthlyDaysSlice from "../../hooks/reducers/repeatMonthlyDaysSlice";
-import repeatIntervalDaysSlice from "../../hooks/reducers/repeatIntervalDaysSlice";
-import repeatIndexSlice from "../../hooks/reducers/repeatIndex";
-import repeatOccurenceSlice from "../../hooks/reducers/repeatOccurence";
-import remindingTimeSlice from "../../hooks/reducers/remindingTime";
 import date from "../../hooks/reducers/dateSlice";
 
 const rootReducer = combineReducers({
@@ -17,9 +12,6 @@ const rootReducer = combineReducers({
   categories: categorySlice,
   task: taskSlice,
   repeatDays: repeatDaysSlice,
-  monthlyDays: repeatmonthlyDaysSlice,
-  intervalDays: repeatIntervalDaysSlice,
-  repeatIndex: repeatIndexSlice,
   date: date,
 
   // Add other reducers here

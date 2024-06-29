@@ -280,11 +280,8 @@ const App = () => {
     setDatePickerVisibility(false);
   };
 
-  const repeatDays = useSelector((state) => state.repeatDays.repeatDays);
-  const monthlyDays = useSelector((state) => state.repeatDays.monthlyDays);
-  const intervalDays = useSelector((state) => state.repeatDays.intervalDays);
-
   const selectedCategory = useSelector((state) => state.categories.expandedId);
+  const infinityDate = dayjs().add(10, "year");
   // Helper function to check if a date matches any of the selected repeat days
   // Helper function to check if a task repeats on the selected day
   const isRepeatDay = (task, date) => {
@@ -307,9 +304,12 @@ const App = () => {
 
   // Filter tasks based on selected date and repeat settings
   const filteredTasks = tasks.filter((task) => {
+    const taskEndDate = task.endDateEnabled
+      ? dayjs(task.endDate)
+      : infinityDate;
     const isWithinDateRange = dayjs(selectedDate).isBetween(
       task.startDate,
-      task.endDate,
+      taskEndDate,
       null,
       "[]"
     );
