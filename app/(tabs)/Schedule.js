@@ -314,8 +314,7 @@ const App = () => {
       "[]"
     );
     const isMatchingCategory =
-      selectedCategory.id === "1" ||
-      task.masterCategory.id === selectedCategory;
+      selectedCategory === "1" || task.masterCategory.id === selectedCategory;
 
     // Check repeat conditions
     const repeatConditionsMet =
