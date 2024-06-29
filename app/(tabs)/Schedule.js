@@ -8,6 +8,7 @@ import {
   Dimensions,
   Button,
   useColorScheme,
+  TextInput,
 } from "react-native";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
@@ -16,17 +17,25 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import { Colors } from "@/constants/Colors";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import {
+  AntDesign,
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ThemedView } from "@/components/ThemedView";
 import CategoryList from "../../components/CategoryList";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { setSelectedDate } from "../../hooks/reducers/selectedDaySlice";
+import { setWeekDay } from "../../hooks/reducers/dateSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { FlashList } from "@shopify/flash-list";
+import { NumberInput, RadioButton } from "react-native-ui-lib";
+import isBetween from "dayjs/plugin/isBetween";
 
-dayjs.extend(isoWeek);
+dayjs.extend(isoWeek); // Extend dayjs with isoWeek plugin
+dayjs.extend(isBetween);
 
 const getDates = (startDate, numDays) => {
   const dates = [];
@@ -87,7 +96,13 @@ const DateItem = React.memo(({ date, isSelected, onSelect, isCurrentDate }) => (
 
 const App = () => {
   const today = dayjs();
-  const startOfLastWeek = today.startOf("isoWeek").subtract(1, "week");
+  const weekDay = useSelector((state) => state.date.weekDay);
+  const weekDaynew = weekDay - 7;
+  const startOfLastWeek = today
+    .subtract(1, "week") // Go back 1 week from today
+    .startOf("isoWeek") // Start of ISO week (typically Monday), so we need to adjust
+    .isoWeekday(weekDay)
+    .subtract(1, "week");
   const selectedDate = useSelector((state) => state.selectedDate);
   const dispatch = useDispatch();
   const [dates, setDates] = useState(getDates(startOfLastWeek, 28)); // Show 35 days initially
@@ -108,7 +123,7 @@ const App = () => {
         (date) => date === today.format("YYYY-MM-DD")
       );
       if (todayIndex !== -1) {
-        const dayOfWeek = today.isoWeekday(); // Get the day of the week (0-6, where 0 is Monday)
+        const dayOfWeek = today.isoWeekday() - weekDaynew; // Get the day of the week (0-6, where 0 is Monday)
         const initialOffset = todayIndex * itemWidth - dayOfWeek * itemWidth; // Positioning today in its normal position within the week
         setTimeout(() => {
           flatListRef.current?.scrollToOffset({
@@ -126,7 +141,7 @@ const App = () => {
       (date) => date === today.format("YYYY-MM-DD")
     );
     if (todayIndex !== -1) {
-      const dayOfWeek = today.isoWeekday() - 1; // Get the day of the week (0-6, where 0 is Monday)
+      const dayOfWeek = today.isoWeekday() - weekDaynew; // Get the day of the week (0-6, where 0 is Monday)
       const initialOffset = todayIndex - dayOfWeek; // Calculate the correct index to scroll to
       if (initialOffset >= 0 && initialOffset < dates.length) {
         flatListRef.current?.scrollToIndex({
@@ -229,7 +244,7 @@ const App = () => {
 
   const getItemLayout = (data, index) => ({
     length: Dimensions.get("window").width / 7,
-    offset: (Dimensions.get("window").width / 7) * index,
+    offset: (Dimensions.get("window").width / 7) * index - 1,
     index,
   });
 
@@ -247,7 +262,7 @@ const App = () => {
     setDatePickerVisibility(false);
     if (date) {
       const formattedDate = dayjs(date).format("YYYY-MM-DD");
-      setSelectedDate(formattedDate);
+      dispatch(setSelectedDate(formattedDate));
 
       // Scroll to the selected date if it exists in the list
       const index = dates.findIndex((item) => item === formattedDate);
@@ -265,21 +280,113 @@ const App = () => {
     setDatePickerVisibility(false);
   };
 
+  const repeatDays = useSelector((state) => state.repeatDays.repeatDays);
+  const monthlyDays = useSelector((state) => state.repeatDays.monthlyDays);
+  const intervalDays = useSelector((state) => state.repeatDays.intervalDays);
+
+  const selectedCategory = useSelector((state) => state.categories.expandedId);
+  // Helper function to check if a date matches any of the selected repeat days
+  // Helper function to check if a task repeats on the selected day
+  const isRepeatDay = (task, date) => {
+    const dayName = date.format("dddd"); // Get the day name, e.g., "Monday"
+    return task.taskRepeat.includes(dayName);
+  };
+
+  // Helper function to check if a task repeats on the selected date of the month
+  const isMonthlyDay = (task, date) => {
+    const dayOfMonth = date.date(); // Get the day of the month, e.g., 1, 2, 3
+    return task.taskRepeat.includes(dayOfMonth);
+  };
+
+  // Helper function to check if a task repeats at a specific interval from the start date
+  const isIntervalDay = (task, date) => {
+    const startDate = dayjs(task.startDate);
+    const diffInDays = date.diff(startDate, "day");
+    return diffInDays % task.taskRepeat === 0;
+  };
+
+  // Filter tasks based on selected date and repeat settings
+  const filteredTasks = tasks.filter((task) => {
+    const isWithinDateRange = dayjs(selectedDate).isBetween(
+      task.startDate,
+      task.endDate,
+      null,
+      "[]"
+    );
+    const isMatchingCategory =
+      selectedCategory.id === "1" ||
+      task.masterCategory.id === selectedCategory;
+
+    // Check repeat conditions
+    const repeatConditionsMet =
+      (task.repeatType === "daily" && isRepeatDay(task, dayjs(selectedDate))) ||
+      (task.repeatType === "monthly" &&
+        isMonthlyDay(task, dayjs(selectedDate))) ||
+      (task.repeatType === "interval" &&
+        isIntervalDay(task, dayjs(selectedDate)));
+
+    return isWithinDateRange && isMatchingCategory && repeatConditionsMet;
+  });
   // End of Date Render Functions
 
   const renderTaskItem = ({ item }) => (
-    <View style={[styles.taskItem, { backgroundColor: item.taskColor }]}>
-      <Text style={{ color: "red" }}>{item.taskName}</Text>
-      <Text>{item.remindingTime}</Text>
-      <Text>{item.taskIcon}</Text>
-      <Text>{item.taskColor}</Text>
-      <Text>{item.repeat}</Text>
-      <Text>{item.repeatOccurence}</Text>
-      <Text>{item.masterCategory.iconName}</Text>
-      <Text>{item.masterCategory.categoryName}</Text>
-      <Text>{item.startDate}</Text>
-      <Text>{item.endDate}</Text>
-      <Text>{item.reminderEnabled}</Text>
+    <View
+      style={[
+        styles.taskItem,
+        {
+          backgroundColor: item.taskColor,
+          flexDirection: "row",
+          padding: 10,
+          height: 120,
+          borderRadius: 40,
+          margin: 10,
+        },
+      ]}
+    >
+      <View style={{ justifyContent: "center", marginRight: 20 }}>
+        <MaterialCommunityIcons
+          name={item.taskIcon}
+          size={50}
+          color={"#222222"}
+        ></MaterialCommunityIcons>
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: "75%",
+        }}
+      >
+        <View style={{ justifyContent: "center" }}>
+          <View>
+            <Text
+              style={{
+                color: "gray",
+                fontWeight: "bold",
+                fontSize: 20,
+                width: 200,
+              }}
+              ellipsizeMode="tail"
+              numberOfLines={1}
+            >
+              {item.taskName}
+            </Text>
+            <Text style={{ color: "#222222" }}>{item.remindingTime}</Text>
+          </View>
+
+          <View
+            style={{
+              borderRadius: 20,
+              backgroundColor: "#fff",
+              width: 30,
+              height: 30,
+              marginTop: 20,
+            }}
+          />
+        </View>
+        <RadioButton value={null} size={25} />
+      </View>
+      {/* <Text>{item.masterCategory.categoryName}</Text> */}
     </View>
   );
 
@@ -355,7 +462,7 @@ const App = () => {
         )}
 
         <FlatList
-          data={tasks}
+          data={filteredTasks}
           renderItem={renderTaskItem}
           keyExtractor={(item, index) => index.toString()}
         />

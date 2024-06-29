@@ -10,8 +10,14 @@ const repeatIndexSlice = createSlice({
     setrepeatIndex: (state, action) => {
       state.repeatIndex = action.payload;
     },
+    resetindex: (state) => {
+      return {
+        ...state,
+        repeatIndex: initialRepeatIndex,
+      };
+    },
   },
 });
 
-export const { setrepeatIndex } = repeatIndexSlice.actions;
+export const { setrepeatIndex, resetindex } = repeatIndexSlice.actions;
 export default repeatIndexSlice.reducer;

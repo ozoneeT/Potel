@@ -1,11 +1,27 @@
-// reducers/taskSlice.js
-
 import { createSlice } from "@reduxjs/toolkit";
 import { format } from "date-fns";
 
 const initialState = {
   taskIcon: "calendar-clock",
-  repeat: "EveryDay",
+  repeat: [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ],
+  taskRepeat: [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ],
+  repeatType: "daily",
   taskColor: "#d2e6fe",
   taskName: "",
   repeatOccurence: ["2", " times ", "daily"],
@@ -15,7 +31,7 @@ const initialState = {
   masterCategory: { id: "1", iconName: "✨", categoryName: "All" },
   remindingTime: "09:00 AM",
   reminderEnabled: false,
-  tasks: [], // Add this to store tasks
+  tasks: [], // Store tasks
 };
 
 const taskSlice = createSlice({
@@ -27,6 +43,12 @@ const taskSlice = createSlice({
     },
     setRepeat: (state, action) => {
       state.repeat = action.payload;
+    },
+    setTaskRepeat: (state, action) => {
+      state.taskRepeat = action.payload;
+    },
+    setrepeatType: (state, action) => {
+      state.repeatType = action.payload;
     },
     setTaskColor: (state, action) => {
       state.taskColor = action.payload;
@@ -47,6 +69,7 @@ const taskSlice = createSlice({
       state.masterCategory = {
         categoryName: action.payload.categoryName,
         iconName: action.payload.iconName,
+        id: action.payload.id,
       };
     },
     setRemindingTime: (state, action) => {
@@ -59,17 +82,20 @@ const taskSlice = createSlice({
       state.tasks.push(action.payload);
     },
     resetTaskDetails: (state) => {
-      state.taskIcon = initialState.taskIcon;
-      state.repeat = initialState.repeat;
-      state.taskColor = initialState.taskColor;
-      state.taskName = initialState.taskName;
-      state.repeatOccurence = initialState.repeatOccurence;
-      state.selectedDays = initialState.selectedDays;
-      state.startDate = initialState.startDate;
-      state.endDate = initialState.endDate;
-      state.masterCategory = initialState.masterCategory;
-      state.remindingTime = initialState.remindingTime;
-      state.reminderEnabled = initialState.reminderEnabled;
+      return {
+        ...state,
+        taskIcon: initialState.taskIcon,
+        repeat: [...initialState.repeat], // Ensure repeat is reset correctly
+        taskColor: initialState.taskColor,
+        taskName: initialState.taskName,
+        repeatOccurence: [...initialState.repeatOccurence],
+        selectedDays: [...initialState.selectedDays],
+        startDate: initialState.startDate,
+        endDate: initialState.endDate,
+        masterCategory: { ...initialState.masterCategory },
+        remindingTime: initialState.remindingTime,
+        reminderEnabled: initialState.reminderEnabled,
+      };
     },
   },
 });
@@ -85,8 +111,10 @@ export const {
   setReminderEnabled,
   setRemindingTime,
   setRepeat,
+  setTaskRepeat,
   addTask,
   resetTaskDetails,
+  setrepeatType,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

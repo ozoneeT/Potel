@@ -11,8 +11,15 @@ const intervalDaysSlice = createSlice({
     setRepeatIntervalDays: (state, action) => {
       state.selectedDay = action.payload;
     },
+    resetInterval: (state) => {
+      return {
+        ...state,
+        intervalDays: initialState,
+      };
+    },
   },
 });
 
-export const { setRepeatIntervalDays } = intervalDaysSlice.actions;
+export const { setRepeatIntervalDays, resetInterval } =
+  intervalDaysSlice.actions;
 export default intervalDaysSlice.reducer;

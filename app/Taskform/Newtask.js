@@ -29,9 +29,15 @@ import {
   setTaskColor,
   setTaskName,
   setRepeat,
+  setTaskRepeat,
+  setrepeatType,
   addTask,
   resetTaskDetails,
 } from "../../hooks/reducers/taskSlice";
+import { resetIndex } from "../../hooks/reducers/repeatDaysSlice";
+import { resetDays } from "../../hooks/reducers/repeatDaysSlice";
+import { resetMonthlydays } from "../../hooks/reducers/repeatMonthlyDaysSlice";
+import { resetInterval } from "../../hooks/reducers/repeatIntervalDaysSlice";
 import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "expo-router";
 import { SheetManager } from "react-native-actions-sheet";
@@ -75,9 +81,9 @@ const Index = () => {
   const router = useNavigation();
   const inputRef = useRef(null);
   const repeatDays = useSelector((state) => state.repeatDays.repeatDays);
-  const selectedDays = useSelector((state) => state.monthlyDays.selectedDays);
-  const selectedIndex = useSelector((state) => state.repeatIndex.repeatIndex);
-  const selectedDay = useSelector((state) => state.intervalDays.selectedDay);
+  const selectedDays = useSelector((state) => state.repeatDays.monthlyDays);
+  const selectedIndex = useSelector((state) => state.repeatDays.repeatIndex);
+  const selectedDay = useSelector((state) => state.repeatDays.intervalDays);
   const [selectRepeat, setSelectrepeat] = useState();
   const selectedCategory = useSelector((state) => state.task.masterCategory);
   const repeatOccurence = useSelector((state) => state.task.repeatOccurence);
@@ -89,19 +95,27 @@ const Index = () => {
   const taskIcon = useSelector((state) => state.task.taskIcon);
   const taskColor = useSelector((state) => state.task.taskColor);
   const repeat = useSelector((state) => state.task.repeat);
+  const taskRepeat = useSelector((state) => state.task.taskRepeat);
+  const repeatType = useSelector((state) => state.task.repeatType);
   const masterCategory = useSelector((state) => state.task.masterCategory);
   useEffect(() => {
     const Selectingrepeat = () => {
       if (selectedIndex == 0) {
         dispatch(setRepeat(`${renderSelectedDays()}`));
+        dispatch(setTaskRepeat(repeatDays));
+        dispatch(setrepeatType("daily"));
       } else if (selectedIndex == 1) {
         dispatch(setRepeat(`Every month On ${formatSelectedDays()}`));
+        dispatch(setTaskRepeat(selectedDays));
+        dispatch(setrepeatType("monthly"));
       } else if (selectedIndex == 2) {
         dispatch(setRepeat(`Every ${selectedDay} days`));
+        dispatch(setTaskRepeat(selectedDay));
+        dispatch(setrepeatType("interval"));
       }
     };
     Selectingrepeat();
-  }, [selectedIndex, selectedDays, selectedDay, repeatDays]);
+  }, [selectedIndex, selectedDays, selectedDay, repeatDays, repeatType]);
 
   const renderSelectedDays = () => {
     const weekDaysMap = {
@@ -159,12 +173,14 @@ const Index = () => {
   }, []);
 
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [enddatePickerVisible, setendDatePickerVisible] = useState(false);
 
   const dispatch = useDispatch();
 
   const handleDateChange = useCallback((event, selectedDate) => {
     if (Platform.OS === "android") {
       setDatePickerVisible(false);
+      setendDatePickerVisible(false);
     }
     if (event.type === "set") {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
@@ -180,12 +196,32 @@ const Index = () => {
     return format(date, "EEEE, MMMM d, yyyy");
   };
 
+  const handleEndDateChange = useCallback((event, selectedDate) => {
+    if (Platform.OS === "android") {
+      setDatePickerVisible(false);
+      setendDatePickerVisible(false);
+    }
+    if (event.type === "set") {
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      dispatch(setEndDate(formattedDate));
+    }
+  });
+
+  const displayEndDate = () => {
+    const date = new Date(endDate);
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    if (isTomorrow(date)) return "Tomorrow";
+    return format(date, "EEEE, MMMM d, yyyy");
+  };
+
   const handleAddTask = () => {
     const newTask = {
       taskName,
       taskIcon,
       taskColor,
-      repeat,
+      taskRepeat,
+      repeatType,
       repeatOccurence,
       startDate,
       endDate,
@@ -193,9 +229,12 @@ const Index = () => {
       remindingTime,
       reminderEnabled,
     };
-
+    console.log(taskRepeat);
     dispatch(addTask(newTask));
     dispatch(resetTaskDetails());
+    // dispatch(resetIndex());
+    // dispatch(resetDays());
+
     router.goBack();
   };
 
@@ -254,7 +293,12 @@ const Index = () => {
                 top: 5,
                 padding: 10,
               }}
-              onPress={() => router.goBack()}
+              onPress={() => [
+                router.goBack(),
+                dispatch(resetTaskDetails()),
+                // dispatch(resetIndex()),
+                // dispatch(resetDays()),
+              ]}
             >
               <AntDesign name="back" size={24} color="black" />
             </Pressable>
@@ -491,11 +535,47 @@ const Index = () => {
             }}
           >
             <DateTimePicker
-              style={{ padding: 20 }}
+              style={{ padding: 10 }}
               value={new Date(startDate)}
               mode="date"
               display="inline"
               onChange={handleDateChange}
+            />
+          </View>
+        )}
+
+        <View style={[styles.taskInfoList, { zIndex: 100 }]}>
+          <Pressable
+            onPress={() => setendDatePickerVisible(!enddatePickerVisible)}
+            style={[styles.taskInfo]}
+          >
+            <View style={[styles.taskwhenIcon, { backgroundColor: "#4194cb" }]}>
+              <Ionicons name="calendar-sharp" size={20} color="white" />
+            </View>
+            <View style={[styles.taskWhen]}>
+              <View>
+                <Text>END DATE</Text>
+                <Text style={{ fontWeight: "bold" }}>{displayEndDate()}</Text>
+              </View>
+              <AntDesign name="right" size={20} color="black" />
+            </View>
+          </Pressable>
+        </View>
+
+        {enddatePickerVisible && (
+          <View
+            style={{
+              backgroundColor: "#fff",
+              margin: 20,
+              borderRadius: 20,
+            }}
+          >
+            <DateTimePicker
+              style={{ padding: 20 }}
+              value={new Date(endDate)}
+              mode="date"
+              display="inline"
+              onChange={handleEndDateChange}
             />
           </View>
         )}

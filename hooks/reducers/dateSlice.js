@@ -5,6 +5,7 @@ import { format, addDays, subDays } from "date-fns";
 const initialState = {
   startDate: format(new Date(), "yyyy-MM-dd"),
   endDate: format(new Date(), "yyyy-MM-dd"),
+  weekDay: 7,
 };
 
 const dateSlice = createSlice({
@@ -14,11 +15,8 @@ const dateSlice = createSlice({
     setStartDate: (state, action) => {
       state.startDate = action.payload;
     },
-    setEndDate: (state, action) => {
-      state.endDate = action.payload;
-    },
   },
 });
 
-export const { setStartDate, setEndDate } = dateSlice.actions;
+export const { setWeekDay } = dateSlice.actions;
 export default dateSlice.reducer;

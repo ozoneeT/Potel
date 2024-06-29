@@ -9,8 +9,8 @@ const Category = () => {
   const selectedCategory = useSelector((state) => state.task.masterCategory);
   const dispatch = useDispatch();
 
-  const categoryPressed = (categoryName, iconName) => {
-    dispatch(setmasterCategory({ categoryName, iconName }));
+  const categoryPressed = (categoryName, iconName, id) => {
+    dispatch(setmasterCategory({ categoryName, iconName, id }));
     router.back();
   };
 
@@ -21,7 +21,9 @@ const Category = () => {
         contentContainerStyle={{ marginTop: 40 }}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => categoryPressed(item.categoryName, item.iconName)}
+            onPress={() =>
+              categoryPressed(item.categoryName, item.iconName, item.id)
+            }
             style={{
               backgroundColor: "lightgrey",
               padding: 20,

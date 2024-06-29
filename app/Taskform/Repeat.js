@@ -17,20 +17,20 @@ import ActionSheet, {
   registerSheet,
 } from "react-native-actions-sheet";
 import { useSelector, useDispatch } from "react-redux";
-import { setRepeatDays } from "../../hooks/reducers/repeatDaysSlice";
-import { setRepeatmonthlyDays } from "../../hooks/reducers/repeatMonthlyDaysSlice";
-import { setRepeatIntervalDays } from "../../hooks/reducers/repeatIntervalDaysSlice";
-import { setrepeatIndex } from "../../hooks/reducers/repeatIndex";
+import {
+  setRepeatDays,
+  setRepeatMonthlyDays,
+  setRepeatIntervalDays,
+  setRepeatIndex,
+} from "../../hooks/reducers/repeatDaysSlice"; // Adjust the import path as necessary
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 import { AntDesign } from "@expo/vector-icons";
 
 const Repeat = (props) => {
-  // const [selectedIndex, setSelectedIndex] = useState(0);
   const dispatch = useDispatch();
 
   const Daily = () => {
     const repeatDays = useSelector((state) => state.repeatDays.repeatDays);
-    const dispatch = useDispatch(); // Get the dispatch function from the hook
 
     const WeekDays = [
       "Sunday",
@@ -43,7 +43,7 @@ const Repeat = (props) => {
     ];
 
     const toggleDay = (day) => {
-      if (repeatDays.includes(day) && selectedIndex == 0) {
+      if (repeatDays.includes(day)) {
         if (repeatDays.length > 1) {
           // Ensure there is at least one day selected
           dispatch(setRepeatDays(repeatDays.filter((d) => d !== day)));
@@ -80,21 +80,20 @@ const Repeat = (props) => {
   };
 
   const Monthly = () => {
-    const selectedDays = useSelector((state) => state.monthlyDays.selectedDays);
-    const dispatch = useDispatch();
+    const selectedDays = useSelector((state) => state.repeatDays.monthlyDays);
 
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
     const handlePress = (day) => {
-      dispatch(setRepeatmonthlyDays(day));
+      if (selectedDays.includes(day)) {
+        dispatch(setRepeatMonthlyDays(selectedDays.filter((d) => d !== day)));
+      } else {
+        dispatch(setRepeatMonthlyDays([...selectedDays, day]));
+      }
     };
+
     return (
-      <View
-        style={{
-          width: "100%",
-          padding: 5,
-        }}
-      >
+      <View style={{ width: "100%", padding: 5 }}>
         <FlatList
           data={days}
           keyExtractor={(item) => item.toString()}
@@ -115,21 +114,17 @@ const Repeat = (props) => {
               onPress={() => handlePress(item)}
             >
               <Text>{item}</Text>
-              {/* {selectedDays.includes(item) && (
-                <Text style={{ marginLeft: "auto", textAlign: "left" }}>✔️</Text>
-              )} */}
             </Pressable>
           )}
         />
       </View>
     );
   };
+
   const Interval = () => {
-    const selectedDay = useSelector((state) => state.intervalDays.selectedDay);
-    const dispatch = useDispatch();
+    const selectedDay = useSelector((state) => state.repeatDays.intervalDays);
 
     const handlePress = (day) => {
-      // Toggle selection of day
       if (selectedDay === day) {
         dispatch(setRepeatIntervalDays(null)); // Deselect if already selected
       } else {
@@ -139,11 +134,7 @@ const Repeat = (props) => {
 
     const days = Array.from({ length: 29 }, (_, i) => i + 2);
     return (
-      <View
-        style={{
-          width: "95%",
-        }}
-      >
+      <View style={{ width: "95%" }}>
         <FlatList
           data={days}
           keyExtractor={(item) => item.toString()}
@@ -161,12 +152,7 @@ const Repeat = (props) => {
               ]}
               onPress={() => handlePress(item)}
             >
-              <Text
-                style={{
-                  fontSize: 17,
-                  fontFamily: "MontserratMedium",
-                }}
-              >
+              <Text style={{ fontSize: 17, fontFamily: "MontserratMedium" }}>
                 Every
                 <Text
                   style={{ textAlign: "right", fontFamily: "MontserratBold" }}
@@ -176,9 +162,6 @@ const Repeat = (props) => {
                 </Text>
                 days
               </Text>
-              {/* {selectedDays.includes(item) && (
-                <Text style={{ marginLeft: "auto", textAlign: "left" }}>✔️</Text>
-              )} */}
             </Pressable>
           )}
         />
@@ -202,15 +185,16 @@ const Repeat = (props) => {
   const colorScheme = useColorScheme();
   const [textColor, setTextColor] = useState("#000");
 
-  const selectedIndex = useSelector((state) => state.repeatIndex.repeatIndex);
+  const selectedIndex = useSelector((state) => state.repeatDays.repeatIndex);
 
   useEffect(() => {
     setTextColor(colorScheme === "dark" ? "#FFF" : "#000");
+
     const handleIndexChange = () => {
-      if (selectedIndex == 0) {
-        dispatch(setRepeatIntervalDays(2));
-      }
-      if (selectedIndex == 1) {
+      if (selectedIndex === 0) {
+        dispatch(setRepeatIntervalDays(3));
+        dispatch(setRepeatMonthlyDays([1]));
+      } else if (selectedIndex === 1) {
         dispatch(
           setRepeatDays([
             "Sunday",
@@ -223,8 +207,7 @@ const Repeat = (props) => {
           ])
         );
         dispatch(setRepeatIntervalDays(2));
-      }
-      if (selectedIndex == 2) {
+      } else if (selectedIndex === 2) {
         dispatch(
           setRepeatDays([
             "Sunday",
@@ -236,16 +219,17 @@ const Repeat = (props) => {
             "Saturday",
           ])
         );
+        dispatch(setRepeatMonthlyDays([1]));
       }
     };
     handleIndexChange();
-  }, [colorScheme, selectedIndex]);
+  }, [colorScheme, selectedIndex, dispatch]);
 
   const _onChange = (event) => {
-    dispatch(setrepeatIndex(event.nativeEvent.selectedSegmentIndex));
+    dispatch(setRepeatIndex(event.nativeEvent.selectedSegmentIndex));
   };
+
   return (
-    // <ActionSheet id={props.sheetId}>
     <View style={[styles.container, { height: "70%" }]}>
       <View style={styles.Header}>
         <Pressable>
@@ -266,7 +250,6 @@ const Repeat = (props) => {
       <View style={styles.componentContainer}>{renderComponent()}</View>
       <Text>{selectedIndex}</Text>
     </View>
-    // </ActionSheet>
   );
 };
 

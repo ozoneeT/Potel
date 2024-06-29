@@ -10,7 +10,7 @@ import repeatIntervalDaysSlice from "../../hooks/reducers/repeatIntervalDaysSlic
 import repeatIndexSlice from "../../hooks/reducers/repeatIndex";
 import repeatOccurenceSlice from "../../hooks/reducers/repeatOccurence";
 import remindingTimeSlice from "../../hooks/reducers/remindingTime";
-import startDate from "../../hooks/reducers/dateSlice";
+import date from "../../hooks/reducers/dateSlice";
 
 const rootReducer = combineReducers({
   selectedDate: selectedDateReducer,
@@ -20,6 +20,7 @@ const rootReducer = combineReducers({
   monthlyDays: repeatmonthlyDaysSlice,
   intervalDays: repeatIntervalDaysSlice,
   repeatIndex: repeatIndexSlice,
+  date: date,
 
   // Add other reducers here
 });
