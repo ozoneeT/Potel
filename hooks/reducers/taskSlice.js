@@ -31,7 +31,11 @@ const initialState = {
   endDateEnabled: false,
   masterCategory: { id: "1", iconName: "✨", categoryName: "All" },
   remindingTime: "09:00 AM",
+  taskTime: "",
+  endTime: "",
   reminderEnabled: false,
+  remindingTimeEnabled: false,
+  timeSegment: 0,
   tasks: [], // Store tasks
 };
 
@@ -53,6 +57,12 @@ const taskSlice = createSlice({
     },
     setTaskColor: (state, action) => {
       state.taskColor = action.payload;
+    },
+    setStarttime: (state, action) => {
+      state.taskTime = action.payload;
+    },
+    setEndtime: (state, action) => {
+      state.endTime = action.payload;
     },
     setTaskName: (state, action) => {
       state.taskName = action.payload;
@@ -82,6 +92,12 @@ const taskSlice = createSlice({
     setReminderEnabled: (state, action) => {
       state.reminderEnabled = action.payload;
     },
+    setRemindingTimeEnabled: (state, action) => {
+      state.remindingTimeEnabled = action.payload;
+    },
+    setTimeSegment: (state, action) => {
+      state.timeSegment = action.payload;
+    },
     addTask: (state, action) => {
       state.tasks.push(action.payload);
     },
@@ -100,6 +116,10 @@ const taskSlice = createSlice({
         masterCategory: { ...initialState.masterCategory },
         remindingTime: initialState.remindingTime,
         reminderEnabled: initialState.reminderEnabled,
+        startTime: initialState.taskTime,
+        endTime: initialState.end,
+        remindingTimeEnabled: initialState.remindingTimeEnabled,
+        timeSegment: initialState.timeSegment,
       };
     },
   },
@@ -109,6 +129,8 @@ export const {
   setTaskIcon,
   setTaskColor,
   setTaskName,
+  setEndtime,
+  setStarttime,
   setmasterCategory,
   setEndDate,
   setRepeatOccurence,
@@ -121,6 +143,8 @@ export const {
   resetTaskDetails,
   setrepeatType,
   setendDateEnabled,
+  setRemindingTimeEnabled,
+  setTimeSegment,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

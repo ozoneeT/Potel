@@ -48,7 +48,7 @@ import { setStartDate, setEndDate } from "../../hooks/reducers/taskSlice";
 import { format, isToday, isYesterday, isTomorrow } from "date-fns";
 import { ScrollView } from "react-native";
 import { ExpandableSection } from "react-native-ui-lib";
-import Toast, { BaseToast, ErrorToast } from "react-native-toast-message";
+import { useToast } from "react-native-toast-notifications";
 const listofColors = [
   {
     id: 1,
@@ -104,6 +104,8 @@ const Index = () => {
   const taskRepeat = useSelector((state) => state.task.taskRepeat);
   const repeatType = useSelector((state) => state.task.repeatType);
   const masterCategory = useSelector((state) => state.task.masterCategory);
+  const startTime = useSelector((state) => state.task.taskTime);
+  const endTime = useSelector((state) => state.task.endTime);
   useEffect(() => {
     const Selectingrepeat = () => {
       if (selectedIndex == 0) {
@@ -131,6 +133,17 @@ const Index = () => {
     selectedDate,
     dispatch,
   ]);
+
+  const timeSegment = useSelector((state) => state.task.timeSegment);
+
+  const [newTime, setnewTime] = useState([]);
+  useEffect(() => {
+    if (timeSegment === 0) {
+      setnewTime(startTime);
+    } else if (timeSegment === 1) {
+      setnewTime([startTime, " - ", endTime]);
+    }
+  }, [timeSegment, startTime, endTime]);
 
   const renderSelectedDays = () => {
     const weekDaysMap = {
@@ -231,70 +244,19 @@ const Index = () => {
     return format(date, "EEEE, MMMM d, yyyy");
   };
 
-  const toastConfig = {
-    /*
-      Overwrite 'success' type,
-      by modifying the existing `BaseToast` component
-    */
-    success: (props) => (
-      <BaseToast
-        {...props}
-        style={{ borderLeftColor: "pink" }}
-        contentContainerStyle={{ paddingHorizontal: 15 }}
-        text1Style={{
-          fontSize: 15,
-          fontWeight: "400",
-        }}
-      />
-    ),
-    /*
-      Overwrite 'error' type,
-      by modifying the existing `ErrorToast` component
-    */
-    error: (props) => (
-      <ErrorToast
-        {...props}
-        text1Style={{
-          fontSize: 17,
-        }}
-        text2Style={{
-          fontSize: 15,
-        }}
-      />
-    ),
-    /*
-      Or create a completely new type - `tomatoToast`,
-      building the layout from scratch.
-  
-      I can consume any custom `props` I want.
-      They will be passed when calling the `show` method (see below)
-    */
-    tomatoToast: ({ text1, props }) => (
-      <View
-        style={{
-          height: 60,
-          width: "100%",
-          backgroundColor: "tomato",
-          zIndex: 100,
-        }}
-      >
-        <Text>{text1}</Text>
-        <Text>{props.uuid}</Text>
-      </View>
-    ),
-  };
-
-  const showToast = () => {
-    Toast.show({
-      type: "error",
-      // And I can pass any custom props I want
-      props: { uuid: "bba1a7d0-6ab2-4a0a-a76e-ebbe05ae6d70" },
-    });
-  };
+  const toast = useToast();
 
   const handleAddTask = () => {
     if (taskName.length == 0) {
-      showToast();
+      toast.show("Task name is empty", {
+        type: "normal",
+        placement: "top",
+        duration: 1000,
+        offset: 30,
+        animationType: "slide-in ",
+        style: { borderRadius: 50 },
+        textStyle: { fontWeight: "bold" },
+      });
       return;
     }
     const newTask = {
@@ -310,6 +272,7 @@ const Index = () => {
       remindingTime,
       reminderEnabled,
       endDateEnabled,
+      newTime,
     };
     dispatch(addTask(newTask));
     dispatch(resetTaskDetails());
@@ -332,7 +295,6 @@ const Index = () => {
         onPress={() => Keyboard.dismiss()}
         style={[styles.container, { backgroundColor: taskColor }]}
       >
-        <Toast config={toastConfig} style={{ zIndex: 1000 }} />
         <ScrollView>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -564,6 +526,24 @@ const Index = () => {
                   <Text style={{ fontWeight: "bold" }}>
                     {selectedCategory.categoryName} {selectedCategory.iconName}
                   </Text>
+                </View>
+                <AntDesign name="right" size={20} color="black" />
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.navigate("Tasktime")}
+              style={styles.taskInfo}
+            >
+              <View
+                style={[styles.taskwhenIcon, { backgroundColor: "#865e9c" }]}
+              >
+                <AntDesign name="tags" size={20} color="white" />
+              </View>
+              <View style={[styles.taskWhen, { borderBottomWidth: 0 }]}>
+                <View>
+                  <Text>SetTime</Text>
+                  <Text style={{ fontWeight: "bold" }}>{newTime}</Text>
                 </View>
                 <AntDesign name="right" size={20} color="black" />
               </View>

@@ -52,7 +52,7 @@ const taskSlice = createSlice({
     setRemindingTime: (state, action) => {
       state.remindingTime = action.payload;
     },
-    setReminderEnabled: (state, action) => {
+    setRemindingTimeEnabled: (state, action) => {
       state.reminderEnabled = action.payload;
     },
     addTask: (state, action) => {
@@ -82,7 +82,7 @@ export const {
   setEndDate,
   setRepeatOccurence,
   setStartDate,
-  setReminderEnabled,
+  setRemindingTimeEnabled,
   setRemindingTime,
   setRepeat,
   addTask,

@@ -19,6 +19,7 @@ import {
   setReminderEnabled,
 } from "../../hooks/reducers/taskSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigation, useRouter } from "expo-router";
 
 const Reminder = () => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -54,10 +55,15 @@ const Reminder = () => {
     return hours + ":" + strMinutes + " " + ampm;
   };
 
+  const router = useNavigation();
+
   return (
     <View>
       <View style={styles.Header}>
-        <Pressable>
+        <Pressable
+          onPress={() => router.goBack()}
+          style={{ padding: 10, zIndex: 10 }}
+        >
           <AntDesign name="back" size={25} color="black" />
         </Pressable>
         <View style={{ alignItems: "center", flex: 1, marginLeft: -50 }}>

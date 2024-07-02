@@ -371,6 +371,7 @@ const App = () => {
               {item.taskName}
             </Text>
             <Text style={{ color: "#222222" }}>{item.remindingTime}</Text>
+            <Text>{item.newTime}</Text>
           </View>
 
           <View
@@ -385,7 +386,6 @@ const App = () => {
         </View>
         <RadioButton value={null} size={25} />
       </View>
-      {/* <Text>{item.masterCategory.categoryName}</Text> */}
     </View>
   );
 

@@ -16,6 +16,7 @@ import store from "../hooks/store";
 import { Provider } from "react-redux";
 import { SheetProvider } from "react-native-actions-sheet";
 import "./sheets"; // here
+import { ToastProvider } from "react-native-toast-notifications";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -81,19 +82,21 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <SheetProvider>
-          <GestureHandlerRootView>
-            <ThemeProvider
-              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-            >
-              <AuthContextProvider>
-                <MainLayout />
-              </AuthContextProvider>
-            </ThemeProvider>
-          </GestureHandlerRootView>
-        </SheetProvider>
-      </SafeAreaProvider>
+      <ToastProvider>
+        <SafeAreaProvider>
+          <SheetProvider>
+            <GestureHandlerRootView>
+              <ThemeProvider
+                value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+              >
+                <AuthContextProvider>
+                  <MainLayout />
+                </AuthContextProvider>
+              </ThemeProvider>
+            </GestureHandlerRootView>
+          </SheetProvider>
+        </SafeAreaProvider>
+      </ToastProvider>
     </Provider>
   );
 }
