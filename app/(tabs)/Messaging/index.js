@@ -6,8 +6,9 @@ import {
   Dimensions,
   FlatList,
   StyleSheet,
+  Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -43,17 +44,21 @@ const Messaging = () => {
   const Chats = ({ item }) => {
     return (
       <Pressable
-        onPress={() => navigation.navigate("messages")}
+        onPress={() =>
+          navigation.navigate("newMessage", {
+            id: item.id,
+            sender: item.sender,
+            image: item.image,
+          })
+        }
         style={styles.chatContainer}
       >
         <View style={styles.chatImage}>
-          <View
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              backgroundColor: "lightgray",
+          <Image
+            source={{
+              uri: item.image,
             }}
+            style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
           />
         </View>
         <View style={styles.chatMessage}>
@@ -76,12 +81,16 @@ const Messaging = () => {
       sender: "Alice",
       lastMessage: "Hello there!",
       createdTime: "10:00 AM",
+      image:
+        "https://med.gov.bz/wp-content/uploads/2020/08/dummy-profile-pic.jpg",
     },
     {
       id: "2",
       sender: "Bob",
       lastMessage: "How are you?",
       createdTime: "10:30 AM",
+      image:
+        "https://cdn.pixabay.com/photo/2018/08/28/12/41/avatar-3637425_640.png",
     },
     // Add more items here
   ];
@@ -96,6 +105,7 @@ const Messaging = () => {
                 flexDirection: "row",
                 alignItems: "center",
                 marginBottom: -5,
+                marginLeft: 5,
               }}
             >
               <Text style={styles.greetingText}>Hello</Text>
@@ -167,7 +177,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginHorizontal: 10,
+    marginHorizontal: 15,
   },
   headerRight: {
     flexDirection: "row",
