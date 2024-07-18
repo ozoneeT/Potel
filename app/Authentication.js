@@ -28,7 +28,8 @@ import { useAuth } from "../context/authContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
 import CustomKeyboardView from "../components/CustomKeyboardView";
-import SegmentedControl from "../components/SegmentedControl";
+import SegmentedControl from "@react-native-segmented-control/segmented-control";
+
 import Animated, {
   FadeIn,
   FadeOut,
@@ -951,6 +952,10 @@ export default function SignIn() {
     }
   };
 
+  const _onChange = (event) => {
+    setSelectedIndex(event.nativeEvent.selectedSegmentIndex);
+  };
+
   return (
     <Pressable onPress={() => Keyboard.dismiss()} style={styles.loginContainer}>
       <ThemedView
@@ -977,9 +982,15 @@ export default function SignIn() {
         <View style={[styles.SegmentedControl]}>
           <View>
             <SegmentedControl
+              values={["Login", "Registration"]}
+              selectedIndex={selectedIndex}
+              onChange={_onChange}
+              style={{ width: "90%", alignSelf: "center", marginTop: 30 }}
+            />
+            {/* <SegmentedControl
               segments={segments1}
               onIndexChange={setSelectedIndex}
-            />
+            /> */}
           </View>
         </View>
         {/* Login form  */}

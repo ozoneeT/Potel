@@ -27,7 +27,7 @@ const MainLayout = () => {
 
   useEffect(() => {
     if (typeof isAuthenticated == "undefined") return;
-    const inApp = segments[0] == "(app)";
+    const inApp = segments[0] == "app";
     if (isAuthenticated && !inApp) {
       router.replace("(tabs)");
     } else if (isAuthenticated == false) {
@@ -35,14 +35,7 @@ const MainLayout = () => {
     }
   }, [isAuthenticated]);
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen
-        name="Taskform"
-        options={{ animation: "slide_from_bottom" }}
-      ></Stack.Screen>
-    </Stack>
-  );
+  return <Slot />;
 };
 
 export default function RootLayout() {

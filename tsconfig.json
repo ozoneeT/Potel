@@ -15,6 +15,7 @@
     "app/(tabs)/schedulecopy.js",
     "app/(tabs)/_layout.js",
     "app/Taskform/Goal.tsxxx",
-    "app/Taskform/Reminder.js"
+    "app/Taskform/Reminder.js",
+    "app/Messaging/newMessage.js"
   ]
 }

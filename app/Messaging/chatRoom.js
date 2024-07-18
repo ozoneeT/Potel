@@ -11,7 +11,9 @@ import {
   Animated,
   Button,
 } from "react-native";
+import ChatBubble from "react-native-chat-bubble";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import messagesData from "../../context/messages.json";
 
 const AnimatedMessage = ({ text, sent }) => {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -40,13 +42,21 @@ const AnimatedMessage = ({ text, sent }) => {
         { opacity, transform: [{ translateY }] },
       ]}
     >
-      <Text style={styles.messageText}>{text}</Text>
+      <ChatBubble
+        isOwnMessage={true}
+        bubbleColor="#1084ff"
+        tailColor="#1084ff"
+        withTail={true}
+        onPress={() => console.log("Bubble Pressed!")}
+      >
+        <Text style={styles.messageText}>{text}</Text>
+      </ChatBubble>
     </Animated.View>
   );
 };
 
 const ChatRoom = () => {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(messagesData);
   const [inputText, setInputText] = useState("");
   const flatListRef = useRef();
 
@@ -154,15 +164,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sentMessage: {
-    backgroundColor: "#DCF8C6",
     alignSelf: "flex-end",
   },
   receivedMessage: {
-    backgroundColor: "#f1f1f1",
     alignSelf: "flex-start",
   },
   messageText: {
     fontSize: 16,
+    color: "white",
   },
   inputContainer: {
     flexDirection: "row",

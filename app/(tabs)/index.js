@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableHighlight,
   useWindowDimensions,
+  Pressable,
 } from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
@@ -77,11 +78,45 @@ export default function Home() {
       console.error("Error", error);
     }
   };
+
+  const rotationAnimation = useSharedValue(0);
+  const startAnimation = () => {
+    rotationAnimation.value = withRepeat(
+      withSequence(
+        withTiming(25, { duration: 150 }),
+        withTiming(0, { duration: 150 })
+      ),
+      4,
+      false
+    );
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotationAnimation.value}deg` }],
+  }));
+
   return (
     <View style={styles.loginContainer}>
       <Text style={{ color: "#ffffff", top: 40 }}>
         Welcome Home {user?.username}
       </Text>
+
+      <Pressable onPress={() => startAnimation()} style={styles.headerLeft}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: -5,
+            marginLeft: 5,
+          }}
+        >
+          <Text style={styles.greetingText}>Hello</Text>
+          <Animated.View style={animatedStyle}>
+            <Text style={styles.hand}>👋</Text>
+          </Animated.View>
+        </View>
+        <Text style={styles.nameText}>Jade</Text>
+      </Pressable>
       <View style={styles.circleInner}>
         <Animated.View style={[styles.innerCircle, animatedStyles]}>
           <TouchableOpacity style={{ backgroundColor: "red" }} />
@@ -274,5 +309,20 @@ const styles = StyleSheet.create({
   },
   facebook: {
     flexDirection: "row",
+  },
+
+  chatTime: {
+    marginLeft: 10,
+  },
+  hand: {
+    fontSize: 22,
+  },
+  greetingText: {
+    fontSize: 15,
+    fontFamily: "PoppinsRegular",
+  },
+  nameText: {
+    fontSize: 23,
+    fontFamily: "PoppinsSemiBold",
   },
 });
