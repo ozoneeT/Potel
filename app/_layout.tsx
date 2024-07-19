@@ -17,6 +17,7 @@ import { Provider } from "react-redux";
 import { SheetProvider } from "react-native-actions-sheet";
 import "./sheets"; // here
 import { ToastProvider } from "react-native-toast-notifications";
+import { MenuProvider } from "react-native-popup-menu";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -35,7 +36,19 @@ const MainLayout = () => {
     }
   }, [isAuthenticated]);
 
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="(taskform)"
+        options={{
+          presentation: "modal",
+          headerTransparent: true,
+          headerBlurEffect: "regular",
+          headerShown: false,
+        }}
+      />
+    </Stack>
+  );
 };
 
 export default function RootLayout() {
@@ -78,15 +91,17 @@ export default function RootLayout() {
       <ToastProvider>
         <SafeAreaProvider>
           <SheetProvider>
-            <GestureHandlerRootView>
-              <ThemeProvider
-                value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-              >
-                <AuthContextProvider>
-                  <MainLayout />
-                </AuthContextProvider>
-              </ThemeProvider>
-            </GestureHandlerRootView>
+            <MenuProvider>
+              <GestureHandlerRootView>
+                <ThemeProvider
+                  value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                >
+                  <AuthContextProvider>
+                    <MainLayout />
+                  </AuthContextProvider>
+                </ThemeProvider>
+              </GestureHandlerRootView>
+            </MenuProvider>
           </SheetProvider>
         </SafeAreaProvider>
       </ToastProvider>

@@ -26,7 +26,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedView } from "@/components/ThemedView";
 import CategoryList from "../../components/CategoryList";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useNavigation, useRouter } from "expo-router";
+import { Link, useNavigation, useRouter } from "expo-router";
 import { setSelectedDate } from "../../hooks/reducers/selectedDaySlice";
 import { setWeekDay } from "../../hooks/reducers/dateSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -466,13 +466,13 @@ const App = () => {
           keyExtractor={(item, index) => index.toString()}
         />
         <View style={styles.addTaskButton}>
-          <Pressable onPress={() => router.navigate("Taskform")}>
+          <Link href={"(taskform)/Newtask"}>
             <AntDesign
               name="pluscircle"
               size={45}
               color={Colors.light.primary}
             />
-          </Pressable>
+          </Link>
         </View>
         <CategoryList />
       </View>

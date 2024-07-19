@@ -80,7 +80,7 @@ const listofColors = [
   },
 ];
 
-const Index = () => {
+const Newtask = () => {
   const [typing, setTyping] = useState(false);
   const router = useNavigation();
   const inputRef = useRef(null);
@@ -712,7 +712,7 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Newtask;
 
 const styles = StyleSheet.create({
   container: {

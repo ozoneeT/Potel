@@ -14,8 +14,8 @@
     "app/(tabs)/index.js",
     "app/(tabs)/schedulecopy.js",
     "app/(tabs)/_layout.js",
-    "app/Taskform/Goal.tsxxx",
-    "app/Taskform/Reminder.js",
-    "app/Messaging/newMessage.js"
+    "app/(taskform)/Goal.tsxxx",
+    "app/(taskform)/Reminder.js",
+    "app/(messages)/Messages.js"
   ]
 }

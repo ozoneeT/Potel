@@ -10,7 +10,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from "react-native";
-import { useNavigation } from "expo-router";
+import { Link, router, useNavigation } from "expo-router";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -73,15 +73,16 @@ const Messaging = () => {
 
     return (
       <AppleStyleSwipeableRow>
+        {/* <Link href="/(messages)/Messages" asChild> */}
         <Pressable
+          style={styles.chatContainer}
           onPress={() =>
-            navigation.navigate("Messaging", {
+            navigation.navigate("(messages)/Messages", {
               id: item.id,
               sender: item.from,
-              image: item.img,
+              senderImage: item.img,
             })
           }
-          style={styles.chatContainer}
         >
           <View style={styles.chatImage}>
             <Image
@@ -108,6 +109,7 @@ const Messaging = () => {
             <Text>{formattedDate}</Text>
           </View>
         </Pressable>
+        {/* </Link> */}
       </AppleStyleSwipeableRow>
     );
   });

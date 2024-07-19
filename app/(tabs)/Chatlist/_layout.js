@@ -1,8 +1,7 @@
 import Colors from "@/constants/Color";
-import Color from "@/constants/Colors";
-import { Entypo, FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Link, Stack } from "expo-router";
-import { TouchableOpacity, View, Text, Image, StyleSheet } from "react-native";
+import { TouchableOpacity, View, Text, Image } from "react-native";
 import { heightPercentageToDP } from "react-native-responsive-screen";
 
 const Layout = () => {
@@ -25,17 +24,23 @@ const Layout = () => {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <View style={styles.headerRight}>
-              <View style={styles.icon1}>
-                <FontAwesome name="search" size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.icon2}>
-                <Entypo
-                  name="dots-three-vertical"
-                  size={20}
+            <View style={{ flexDirection: "row", gap: 30 }}>
+              <TouchableOpacity>
+                <Ionicons
+                  name="camera-outline"
                   color={Colors.primary}
+                  size={30}
                 />
-              </View>
+              </TouchableOpacity>
+              <Link href="/(modals)/new-chat" asChild>
+                <TouchableOpacity>
+                  <Ionicons
+                    name="add-circle"
+                    color={Colors.primary}
+                    size={30}
+                  />
+                </TouchableOpacity>
+              </Link>
             </View>
           ),
           headerStyle: {
@@ -46,32 +51,58 @@ const Layout = () => {
           },
         }}
       />
+
+      {/* <Stack.Screen
+        name="[id]"
+        options={{
+          title: "",
+          headerBackTitleVisible: false,
+
+          headerTitle: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                width: 220,
+                alignItems: "center",
+                gap: 10,
+                paddingBottom: 4,
+              }}
+            >
+              <Image
+                source={{
+                  uri: "https://pbs.twimg.com/profile_images/1564203599747600385/f6Lvcpcu_400x400.jpg",
+                }}
+                style={{ width: 40, height: 40, borderRadius: 50 }}
+              />
+              <Text style={{ fontSize: 16, fontWeight: "500" }}>
+                Simon Grimm
+              </Text>
+            </View>
+          ),
+          headerRight: () => (
+            <View style={{ flexDirection: "row", gap: 30 }}>
+              <TouchableOpacity>
+                <Ionicons
+                  name="videocam-outline"
+                  color={Colors.primary}
+                  size={30}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Ionicons
+                  name="call-outline"
+                  color={Colors.primary}
+                  size={30}
+                />
+              </TouchableOpacity>
+            </View>
+          ),
+          headerStyle: {
+            backgroundColor: Colors.background,
+          },
+        }}
+      /> */}
     </Stack>
   );
 };
-
-const styles = StyleSheet.create({
-  headerRight: {
-    flexDirection: "row",
-  },
-  icon1: {
-    height: 40,
-    width: 40,
-    borderRadius: 25,
-    borderColor: Colors.primary,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  icon2: {
-    height: 40,
-    width: 40,
-    borderRadius: 25,
-    borderColor: Colors.primary,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 10,
-  },
-});
 export default Layout;
