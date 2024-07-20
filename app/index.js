@@ -7,6 +7,7 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import LogoBack from "../components/LogoBack";
+import { router } from "expo-router";
 
 export default function StartPage() {
   return (

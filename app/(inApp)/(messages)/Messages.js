@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -31,8 +31,8 @@ import {
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { RectButton } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
-import messagesData from "../../context/messages.json";
-import bg from "../../assets/images/BG.png";
+import messagesData from "../../../context/messages.json";
+import bg from "../../../assets/images/BG.png";
 import { Colors } from "@/constants/Colors";
 import {
   Menu,
@@ -42,7 +42,9 @@ import {
 } from "react-native-popup-menu";
 import { LongPressGestureHandler, State } from "react-native-gesture-handler";
 import { router } from "expo-router";
-
+import { FlashList } from "@shopify/flash-list";
+import LottieView from "lottie-react-native";
+import axios from "axios";
 dayjs.extend(relativeTime);
 
 const ChatRoom = () => {
@@ -55,8 +57,11 @@ const ChatRoom = () => {
   const route = useRoute();
   const sender = route.params?.sender;
   const senderImage = route.params?.senderImage;
+  const [typingDisplay, setTypingDisplay] = useState("none");
+  const [typing, setTyping] = useState(false);
 
   const handleSendMessage = useCallback(() => {
+    setTyping(false);
     if (newMessage.trim()) {
       let messageToSend = newMessage;
 
@@ -265,6 +270,72 @@ const ChatRoom = () => {
     messages: groupedMessages[date],
   }));
 
+  const [linkMetadata, setLinkMetadata] = useState();
+  // Updated URL pattern to capture a broader range of domain suffixes
+  const urlPattern =
+    /(?:https?:\/\/|www\.)[^\s/$.?#].[^\s]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
+
+  const formatUrl = (url) => {
+    // Check if URL starts with 'http://', 'https://', or 'www.'
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    // Check if URL starts with 'www.'
+    if (url.startsWith("www.")) {
+      return `https://${url}`;
+    }
+
+    // For URLs without 'www.', prepend 'www.' and ensure 'https://'
+    return `https://www.${url}`;
+  };
+
+  const fetchLinkMetadata = async (url) => {
+    try {
+      const formattedUrl = formatUrl(url);
+      const response = await axios.get(formattedUrl);
+      const headers = response.headers;
+      // Process headers or response data as needed
+      setLinkMetadata(headers);
+      console.log("Link metadata fetched:", headers);
+    } catch (error) {
+      console.error("Error fetching link metadata:", error);
+    }
+  };
+
+  const handleTextChange = (text) => {
+    setNewMessage(text);
+
+    // Find all URLs or domain names in the text
+    const urls = text.match(urlPattern);
+
+    // Handle case where text includes a domain suffix directly
+    const domainSuffixPattern =
+      /\.(com|net|org|co|io|me|tv|biz|info|edu|gov|xyz|mil|int|arpa|aero|asia|biz|cat|coop|jobs|mobi|museum|name|post|pro|tel|travel|xxx)$/i;
+    if (domainSuffixPattern.test(text)) {
+      fetchLinkMetadata(`https://www.${text}`);
+    }
+
+    // Fetch metadata for each detected URL
+    if (urls && urls.length > 0) {
+      urls.forEach((url) => {
+        // Ensure proper URL formatting
+        const formattedUrl = formatUrl(url);
+        fetchLinkMetadata(formattedUrl);
+      });
+    } else {
+      setLinkMetadata(null);
+    }
+
+    // Handle typing status
+    if (text.length > 0 && typing === false) {
+      setTyping(true);
+    }
+    if (text.length === 0 && typing === true) {
+      setTyping(false);
+    }
+  };
+
   return (
     <View style={styles.safeArea}>
       <View style={styles.header}>
@@ -307,10 +378,14 @@ const ChatRoom = () => {
           keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
           style={styles.container}
         >
-          <FlatList
+          <FlashList
+            estimatedItemSize={500}
             ref={flatListRef}
             keyboardDismissMode="interactive"
             data={groupedMessagesArray}
+            contentContainerStyle={{
+              paddingLeft: 20,
+            }}
             keyExtractor={(item) => item.date}
             renderItem={({ item }) => (
               <View>
@@ -330,8 +405,24 @@ const ChatRoom = () => {
               </View>
             )}
             inverted
-            contentContainerStyle={{ paddingBottom: 10, paddingHorizontal: 10 }}
+            ListHeaderComponent={
+              typing && (
+                <View>
+                  <LottieView
+                    style={styles.loader}
+                    source={require("@/assets/lottie/typing.json")}
+                    autoPlay
+                    loop
+                  />
+                </View>
+              )
+            }
           />
+          {linkMetadata && (
+            <View>
+              <Text>Link Metadata: {JSON.stringify(linkMetadata)}</Text>
+            </View>
+          )}
 
           {replyingText && (
             <Animated.View style={styles.replyingContainer}>
@@ -355,7 +446,7 @@ const ChatRoom = () => {
               ref={textInputRef}
               style={styles.textInput}
               value={newMessage}
-              onChangeText={setNewMessage}
+              onChangeText={handleTextChange}
               placeholder="Type a message"
             />
             <Pressable
@@ -383,6 +474,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "flex-end",
+    width: "100%",
   },
   inputContainer: {
     flexDirection: "row",
@@ -407,8 +499,8 @@ const styles = StyleSheet.create({
   messageContainer: {
     padding: 10,
     marginVertical: 5,
-
     maxWidth: "80%",
+    marginRight: 20,
   },
   myMessage: {
     backgroundColor: Colors.light.primary,
@@ -524,6 +616,11 @@ const styles = StyleSheet.create({
   headerMiddle: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  loader: {
+    width: heightPercentageToDP(10),
+    height: heightPercentageToDP(10),
+    top: "20%",
   },
 });
 

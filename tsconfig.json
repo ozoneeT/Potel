@@ -11,11 +11,11 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "app/(tabs)/index.js",
-    "app/(tabs)/schedulecopy.js",
-    "app/(tabs)/_layout.js",
-    "app/(taskform)/Goal.tsxxx",
-    "app/(taskform)/Reminder.js",
-    "app/(messages)/Messages.js"
+    "app/(inApp)/(tabs)/index.js",
+    "app/(inApp)/(tabs)/schedulecopy.js",
+    "app/(inApp)/(tabs)/_layout.js",
+    "app/(inApp)/(taskform)/Goal.tsxxx",
+    "app/(inApp)/(taskform)/Reminder.js",
+    "app/(inApp)/(messages)/Messages.js"
   ]
 }

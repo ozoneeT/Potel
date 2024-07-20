@@ -35,16 +35,14 @@ import {
   addTask,
   resetTaskDetails,
   setendDateEnabled,
-} from "../../hooks/reducers/taskSlice";
-import { resetIndex } from "../../hooks/reducers/repeatDaysSlice";
-import { resetDays } from "../../hooks/reducers/repeatDaysSlice";
-import { resetMonthlydays } from "../../hooks/reducers/repeatMonthlyDaysSlice";
-import { resetInterval } from "../../hooks/reducers/repeatIntervalDaysSlice";
+} from "@/hooks/reducers/taskSlice";
+import { resetIndex } from "@/hooks/reducers/repeatDaysSlice";
+import { resetDays } from "@/hooks/reducers/repeatDaysSlice";
 import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "expo-router";
 import { SheetManager } from "react-native-actions-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { setStartDate, setEndDate } from "../../hooks/reducers/taskSlice";
+import { setStartDate, setEndDate } from "@/hooks/reducers/taskSlice";
 import { format, isToday, isYesterday, isTomorrow } from "date-fns";
 import { ScrollView } from "react-native";
 import { ExpandableSection } from "react-native-ui-lib";

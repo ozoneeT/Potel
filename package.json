@@ -31,6 +31,7 @@
     "@reduxjs/toolkit": "^2.2.5",
     "@shopify/flash-list": "^1.6.4",
     "@shopify/react-native-skia": "1.2.3",
+    "axios": "^1.7.2",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.11",
     "emoji-utils": "^1.0.1",

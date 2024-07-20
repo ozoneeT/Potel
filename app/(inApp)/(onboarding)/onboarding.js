@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import LoadingSplash from "../components/LoadingSplash";
+import LoadingSplash from "@/components/LoadingSplash";
 import Checkbox from "expo-checkbox";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -57,7 +57,7 @@ const onboardingSteps = [
       "Receive instant notifications when power is available at specific Locations in Eksu, ensuring you never miss an opportunity to charge your gadgets or make good use of Eksu Power.Say goodbye to missed charging opportunities and hello to uninterrupted productivity with Potel Bot.",
     display: "none",
     backDisplay: "none",
-    imagefile: require("../assets/images/potelbot.png"),
+    imagefile: require("@/assets/images/potelbot.png"),
     aspectRatio: 0.3,
     position: hp(-2),
     subtitle: "",
@@ -76,7 +76,7 @@ const onboardingSteps = [
       "Uniting Like-Minded Individuals for Shared Success. Whether you're a gamer seeking comradeship, an entrepreneur hustling for success, or a student from any department eager to connect, our platform offers dedicated rooms tailored to your interests and goals",
     display: "none",
     backDisplay: "flex",
-    imagefile: require("../assets/images/community.png"),
+    imagefile: require("@/assets/images/community.png"),
     aspectRatio: 0.2,
     position: hp(-45),
     subtitle: "",
@@ -96,7 +96,7 @@ const onboardingSteps = [
       "Elevate Your Productivity with Time Management Mastery. Whether it's studying for exams, completing assignments, or pursuing personal goals, Potel Scheduler empowers you to make the most of your time",
     display: "flex",
     backDisplay: "flex",
-    imagefile: require("../assets/images/scheduler.png"),
+    imagefile: require("@/assets/images/scheduler.png"),
     aspectRatio: 0.35,
     position: hp(20),
     subtitle: "",
@@ -212,6 +212,9 @@ export default function Onboarding() {
       router.replace("Authentication");
     }
   };
+  useEffect(() => {
+    endOnboarding();
+  }, [termsChecked]);
 
   // swipe Gesture
 

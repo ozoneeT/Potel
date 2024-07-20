@@ -24,11 +24,11 @@ import {
 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ThemedView } from "@/components/ThemedView";
-import CategoryList from "../../components/CategoryList";
+import CategoryList from "@/components/CategoryList";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Link, useNavigation, useRouter } from "expo-router";
-import { setSelectedDate } from "../../hooks/reducers/selectedDaySlice";
-import { setWeekDay } from "../../hooks/reducers/dateSlice";
+import { setSelectedDate } from "@/hooks/reducers/selectedDaySlice";
+
 import { useDispatch, useSelector } from "react-redux";
 import { FlashList } from "@shopify/flash-list";
 import { NumberInput, RadioButton } from "react-native-ui-lib";

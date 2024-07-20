@@ -1,7 +1,7 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setmasterCategory } from "../../hooks/reducers/taskSlice";
+import { setmasterCategory } from "@/hooks/reducers/taskSlice";
 import { router } from "expo-router";
 
 const Category = () => {

@@ -13,11 +13,11 @@ import { useState } from "react";
 import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import AnalogClock from "../../components/AnalogClock";
+import AnalogClock from "@/components/AnalogClock";
 import {
   setRemindingTime,
   setReminderEnabled,
-} from "../../hooks/reducers/taskSlice";
+} from "@/hooks/reducers/taskSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation, useRouter } from "expo-router";
 

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
-import { AuthContextProvider, useAuth } from "../../context/authContext";
+import { AuthContextProvider, useAuth } from "@/context/authContext";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -36,8 +36,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import LottieView from "lottie-react-native";
-import PotelHead from "../../assets/images/potelHead.png";
-import RadarGray from "../../assets/lottie/RadarGray.json";
+import PotelHead from "@/assets/images/potelHead.png";
+import RadarGray from "@/assets/lottie/RadarGray.json";
 
 export default function Home() {
   const { logout, user } = useAuth();

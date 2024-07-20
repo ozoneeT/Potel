@@ -12,14 +12,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "expo-router";
 import { ExpandableSection } from "react-native-ui-lib";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import AnalogClock from "../../components/AnalogClock";
+import AnalogClock from "@/components/AnalogClock";
 import * as Haptics from "expo-haptics";
 import {
   setStarttime,
   setEndtime,
   setRemindingTimeEnabled,
   setTimeSegment,
-} from "../../hooks/reducers/taskSlice";
+} from "@/hooks/reducers/taskSlice";
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 
 const Tasktime = () => {

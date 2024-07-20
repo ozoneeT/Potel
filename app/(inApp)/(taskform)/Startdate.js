@@ -1,26 +1,25 @@
-// components/EndDate.js
+// components/StartDate.js
 import React, { useState } from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useDispatch, useSelector } from "react-redux";
-import { setEndDate } from "../../hooks/reducers/taskSlice";
-import { format, isToday, isYesterday, isTomorrow } from "date-fns";
+import { setStartDate } from "@/hooks/reducers/taskSlice";
 
-const EndDate = () => {
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const endDate = useSelector((state) => state.date.endDate);
+const StartDate = () => {
+  const [datePickerVisible, setDatePickerVisible] = useState(true);
+  const startDate = useSelector((state) => state.task.startDate);
   const dispatch = useDispatch();
 
   const handleDateChange = (event, selectedDate) => {
     if (event.type === "set") {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      dispatch(setEndDate(formattedDate));
+      dispatch(setStartDate(formattedDate));
     }
     setDatePickerVisible(false);
   };
 
   const displayDate = () => {
-    const date = new Date(endDate);
+    const date = new Date(startDate);
     if (isToday(date)) return "Today";
     if (isYesterday(date)) return "Yesterday";
     if (isTomorrow(date)) return "Tomorrow";
@@ -34,7 +33,7 @@ const EndDate = () => {
       </Pressable>
       {datePickerVisible && (
         <DateTimePicker
-          value={new Date(endDate)}
+          value={new Date(startDate)}
           mode="date"
           display="default"
           onChange={handleDateChange}
@@ -54,4 +53,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EndDate;
+export default StartDate;

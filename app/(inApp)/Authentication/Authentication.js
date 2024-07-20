@@ -23,11 +23,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox";
 import { useRouter } from "expo-router";
-import Loading from "../components/Loading";
-import { useAuth } from "../context/authContext";
+import Loading from "@/components/Loading";
+import { useAuth } from "@/context/authContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
-import CustomKeyboardView from "../components/CustomKeyboardView";
+import CustomKeyboardView from "@/components/CustomKeyboardView";
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 
 import Animated, {
@@ -53,9 +53,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { collection, getDocs, query, where } from "@firebase/firestore";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { auth, db } from "../FirebaseConfig";
+import { auth, db } from "@/FirebaseConfig";
 import NetInfo from "@react-native-community/netinfo";
-import LogoBack from "../components/LogoBack";
 import {
   GoogleAuthProvider,
   getAuth,
@@ -66,7 +65,7 @@ import * as firebase from "firebase/app";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Colors } from "@/constants/Colors";
-import LoginBack from "../assets/images/newback.png";
+import LoginBack from "@/assets/images/newback.png";
 export default function SignIn() {
   const colorScheme = useColorScheme();
   const router = useRouter();
@@ -433,7 +432,7 @@ export default function SignIn() {
             <View style={styles.oauthIcon}>
               <Image
                 style={styles.icon}
-                source={require("../assets/images/facebookIcon.png")}
+                source={require("@/assets/images/facebookIcon.png")}
               />
               <Text style={styles.oauthText}>Facebook</Text>
             </View>
@@ -443,7 +442,7 @@ export default function SignIn() {
             >
               <Image
                 style={styles.icon}
-                source={require("../assets/images/googleIcon.png")}
+                source={require("@/assets/images/googleIcon.png")}
               />
               <Text style={styles.oauthText}>Google</Text>
             </TouchableOpacity>
@@ -924,14 +923,14 @@ export default function SignIn() {
             <View style={styles.oauthIcon}>
               <Image
                 style={styles.icon}
-                source={require("../assets/images/facebookIcon.png")}
+                source={require("@/assets/images/facebookIcon.png")}
               />
               <Text style={styles.oauthText}>Facebook</Text>
             </View>
             <View style={styles.oauthIcon}>
               <Image
                 style={styles.icon}
-                source={require("../assets/images/googleIcon.png")}
+                source={require("@/assets/images/googleIcon.png")}
               />
               <Text style={styles.oauthText}>Google</Text>
             </View>
@@ -971,7 +970,7 @@ export default function SignIn() {
           <Button title="clear" onPress={() => clearAsyncStorage()}></Button>
           <Image
             style={styles.logo}
-            source={require("../assets/images/potel.png")}
+            source={require("@/assets/images/potel.png")}
             resizeMode="contain"
           />
           <Text style={styles.PotelText}>POTEL</Text>

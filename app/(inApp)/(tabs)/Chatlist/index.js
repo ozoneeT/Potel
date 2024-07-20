@@ -28,6 +28,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Platform } from "react-native";
 dayjs.extend(relativeTime);
 import { useHeaderHeight } from "@react-navigation/elements";
+import { FlashList } from "@shopify/flash-list";
 
 const Messaging = () => {
   const [selectedIndex, setSelectedIndex] = useState("All");
@@ -118,9 +119,13 @@ const Messaging = () => {
 
   return (
     <SafeAreaView
-      style={Platform.OS === "android" ? { marginTop: headerHight } : null}
+      style={[
+        Platform.OS === "android" ? { marginTop: headerHight } : null,
+        { flex: 1 },
+      ]}
     >
-      <FlatList
+      <FlashList
+        estimatedItemSize={500}
         data={chats}
         keyboardDismissMode="on-drag"
         keyExtractor={(item) => item.id}
@@ -128,7 +133,8 @@ const Messaging = () => {
         ListHeaderComponent={
           <View style={styles.headerContainer}>
             <View style={styles.segmentContainer}>
-              <FlatList
+              <FlashList
+                estimatedItemSize={20}
                 data={[
                   "All",
                   "Unreads",

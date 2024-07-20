@@ -22,7 +22,7 @@ import {
   setRepeatMonthlyDays,
   setRepeatIntervalDays,
   setRepeatIndex,
-} from "../../hooks/reducers/repeatDaysSlice"; // Adjust the import path as necessary
+} from "@/hooks/reducers/repeatDaysSlice"; // Adjust the import path as necessary
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 import { AntDesign } from "@expo/vector-icons";
 

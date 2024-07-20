@@ -102,7 +102,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"; // Assuming you're using Expo icons
 import { useRef } from "react";
-import { setTaskIcon } from "../../hooks/reducers/taskSlice";
+import { setTaskIcon } from "@/hooks/reducers/taskSlice";
 import { FlashList } from "@shopify/flash-list";
 import {
   heightPercentageToDP as hp,

@@ -32,23 +32,13 @@ const MainLayout = () => {
     if (isAuthenticated && !inApp) {
       router.replace("(tabs)");
     } else if (isAuthenticated == false) {
-      router.replace("onboardingLayout");
+      router.replace("(inApp)/Authentication/Authentication");
+    } else {
+      router.replace("(tabs)");
     }
   }, [isAuthenticated]);
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen
-        name="(taskform)"
-        options={{
-          presentation: "modal",
-          headerTransparent: true,
-          headerBlurEffect: "regular",
-          headerShown: false,
-        }}
-      />
-    </Stack>
-  );
+  return <Slot />;
 };
 
 export default function RootLayout() {

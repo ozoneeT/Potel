@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import ChatBubble from "react-native-chat-bubble";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import messagesData from "../../context/messages.json";
+import messagesData from "@/context/messages.json";
 
 const AnimatedMessage = ({ text, sent }) => {
   const opacity = useRef(new Animated.Value(0)).current;
