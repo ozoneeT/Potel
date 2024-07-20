@@ -11,6 +11,12 @@ import {
   FlatList,
   Animated,
   Image,
+  TouchableOpacity,
+  Keyboard,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+  Button,
 } from "react-native";
 import {
   Entypo,
@@ -34,6 +40,7 @@ import * as Haptics from "expo-haptics";
 import messagesData from "../../../context/messages.json";
 import bg from "../../../assets/images/BG.png";
 import { Colors } from "@/constants/Colors";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import {
   Menu,
   MenuOptions,
@@ -45,6 +52,13 @@ import { router } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import LottieView from "lottie-react-native";
 import axios from "axios";
+import cheerio from "cheerio";
+import { useMemo } from "react";
+import * as MediaLibrary from "expo-media-library";
+import * as FileSystem from "expo-file-system";
+import { Picker } from "@react-native-picker/picker";
+import { Audio } from "expo-av";
+
 dayjs.extend(relativeTime);
 
 const ChatRoom = () => {
@@ -272,21 +286,17 @@ const ChatRoom = () => {
 
   const [linkMetadata, setLinkMetadata] = useState();
   // Updated URL pattern to capture a broader range of domain suffixes
+
   const urlPattern =
     /(?:https?:\/\/|www\.)[^\s/$.?#].[^\s]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
 
   const formatUrl = (url) => {
-    // Check if URL starts with 'http://', 'https://', or 'www.'
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
-
-    // Check if URL starts with 'www.'
     if (url.startsWith("www.")) {
       return `https://${url}`;
     }
-
-    // For URLs without 'www.', prepend 'www.' and ensure 'https://'
     return `https://www.${url}`;
   };
 
@@ -294,10 +304,38 @@ const ChatRoom = () => {
     try {
       const formattedUrl = formatUrl(url);
       const response = await axios.get(formattedUrl);
-      const headers = response.headers;
-      // Process headers or response data as needed
-      setLinkMetadata(headers);
-      console.log("Link metadata fetched:", headers);
+      const html = response.data;
+      const $ = cheerio.load(html);
+
+      // Extract metadata
+      const title =
+        $('meta[property="og:title"]').attr("content") || $("title").text();
+      const description =
+        $('meta[name="description"]').attr("content") ||
+        $('meta[property="og:description"]').attr("content");
+
+      let image = $('meta[property="og:image"]').attr("content");
+      if (!image) {
+        const linkTags = $(
+          'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
+        );
+        if (linkTags.length > 0) {
+          image = linkTags.first().attr("href");
+          // Handle relative URL for favicon
+          if (image && !image.startsWith("http")) {
+            image = new URL(image, formattedUrl).href;
+          }
+        }
+      }
+
+      const metadata = {
+        title,
+        description,
+        image,
+      };
+
+      setLinkMetadata(metadata);
+      console.log("Link metadata fetched:", metadata);
     } catch (error) {
       console.error("Error fetching link metadata:", error);
     }
@@ -306,20 +344,15 @@ const ChatRoom = () => {
   const handleTextChange = (text) => {
     setNewMessage(text);
 
-    // Find all URLs or domain names in the text
     const urls = text.match(urlPattern);
+    const domainSuffixPattern = /\.(com|net|org|co|io|me|tv|biz|info)$/i;
 
-    // Handle case where text includes a domain suffix directly
-    const domainSuffixPattern =
-      /\.(com|net|org|co|io|me|tv|biz|info|edu|gov|xyz|mil|int|arpa|aero|asia|biz|cat|coop|jobs|mobi|museum|name|post|pro|tel|travel|xxx)$/i;
     if (domainSuffixPattern.test(text)) {
       fetchLinkMetadata(`https://www.${text}`);
     }
 
-    // Fetch metadata for each detected URL
     if (urls && urls.length > 0) {
       urls.forEach((url) => {
-        // Ensure proper URL formatting
         const formattedUrl = formatUrl(url);
         fetchLinkMetadata(formattedUrl);
       });
@@ -327,7 +360,6 @@ const ChatRoom = () => {
       setLinkMetadata(null);
     }
 
-    // Handle typing status
     if (text.length > 0 && typing === false) {
       setTyping(true);
     }
@@ -335,6 +367,116 @@ const ChatRoom = () => {
       setTyping(false);
     }
   };
+
+  const [hasPermission, setHasPermission] = useState(null);
+  const [albums, setAlbums] = useState([]);
+  const [selectedAlbum, setSelectedAlbum] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [photoUris, setPhotoUris] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const bottomSheetRef = useRef(null);
+
+  const snapPoints = useMemo(() => ["25%", "50%", "100%"], []);
+
+  // Function to request permissions
+  const requestPermissions = async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status === "granted") {
+      setHasPermission(true);
+      fetchAlbums();
+    } else {
+      setHasPermission(false);
+      Alert.alert(
+        "Permission Required",
+        "Permission to access photos is required. Please grant permission in your device settings.",
+        [
+          { text: "Retry", onPress: requestPermissions },
+          { text: "Cancel", onPress: () => console.log("Permission denied") },
+        ]
+      );
+    }
+  };
+
+  const fetchAlbums = async () => {
+    try {
+      const albums = await MediaLibrary.getAlbumsAsync({
+        includeSmartAlbums: true,
+      });
+      setAlbums(albums);
+      if (albums.length > 0) {
+        setSelectedAlbum(albums[0].id); // Set the album ID instead of the whole album object
+      }
+    } catch (error) {
+      console.error("Error fetching albums:", error);
+    }
+  };
+
+  const fetchPhotos = async (albumId) => {
+    setLoading(true);
+    try {
+      let allPhotos = [];
+      let hasNextPage = true;
+      let cursor = null;
+
+      while (hasNextPage) {
+        const {
+          assets,
+          endCursor,
+          hasNextPage: morePages,
+        } = await MediaLibrary.getAssetsAsync({
+          mediaType: "photo",
+          album: albumId,
+          first: 100,
+          after: cursor,
+        });
+        allPhotos = [...allPhotos, ...assets];
+        cursor = endCursor;
+        hasNextPage = morePages;
+      }
+
+      setPhotos(allPhotos);
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    requestPermissions();
+  }, []);
+
+  useEffect(() => {
+    if (selectedAlbum) {
+      fetchPhotos(selectedAlbum);
+    }
+  }, [selectedAlbum]);
+
+  useEffect(() => {
+    (async () => {
+      if (photos.length > 0) {
+        try {
+          const uris = await Promise.all(
+            photos.map(async (photo) => {
+              const info = await MediaLibrary.getAssetInfoAsync(photo.id);
+              return info.localUri || info.uri;
+            })
+          );
+          setPhotoUris(uris);
+        } catch (error) {
+          console.error("Error fetching photo URIs:", error);
+        }
+      }
+    })();
+  }, [photos]);
+
+  const handleOpenPress = () => {
+    bottomSheetRef.current?.expand();
+  };
+
+  const renderItem = ({ item }) => (
+    <Image source={{ uri: item }} style={styles.imageGallery} />
+  );
 
   return (
     <View style={styles.safeArea}>
@@ -372,6 +514,7 @@ const ChatRoom = () => {
           </Pressable>
         </View>
       </View>
+
       <ImageBackground source={bg} style={styles.backgroundImage}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -420,7 +563,20 @@ const ChatRoom = () => {
           />
           {linkMetadata && (
             <View>
-              <Text>Link Metadata: {JSON.stringify(linkMetadata)}</Text>
+              {linkMetadata.image && (
+                <Image
+                  source={{ uri: linkMetadata.image }}
+                  style={{ width: 50, height: 50, resizeMode: "contain" }}
+                />
+              )}
+              {linkMetadata.title && (
+                <Text style={styles.title}>{linkMetadata.title}</Text>
+              )}
+              {linkMetadata.description && (
+                <Text style={styles.description}>
+                  {linkMetadata.description}
+                </Text>
+              )}
             </View>
           )}
 
@@ -441,7 +597,11 @@ const ChatRoom = () => {
               </Pressable>
             </Animated.View>
           )}
+
           <View style={[styles.inputContainer]}>
+            <TouchableOpacity style={{ padding: 5 }} onPress={handleOpenPress}>
+              <Ionicons name="attach" size={24} color="black" />
+            </TouchableOpacity>
             <TextInput
               ref={textInputRef}
               style={styles.textInput}
@@ -449,14 +609,76 @@ const ChatRoom = () => {
               onChangeText={handleTextChange}
               placeholder="Type a message"
             />
-            <Pressable
-              onPress={handleSendMessage}
-              style={styles.sendButton}
-              accessibilityLabel="Send message"
-            >
-              <Ionicons name="send" size={24} color="white" />
-            </Pressable>
+
+            {!typing && (
+              <Pressable style={styles.micIcon}>
+                <Ionicons
+                  name="mic"
+                  size={20}
+                  color={Colors.light.background}
+                />
+              </Pressable>
+            )}
+            {typing && (
+              <Pressable
+                onPress={handleSendMessage}
+                style={styles.sendButton}
+                accessibilityLabel="Send message"
+              >
+                <Ionicons
+                  name="send"
+                  size={20}
+                  color={Colors.light.background}
+                />
+              </Pressable>
+            )}
           </View>
+          <>
+            <BottomSheet
+              enablePanDownToClose
+              snapPoints={snapPoints}
+              index={-1}
+              ref={bottomSheetRef}
+            >
+              <BottomSheetView style={styles.contentContainer}>
+                {hasPermission === null ? (
+                  <Text>Requesting permission...</Text>
+                ) : hasPermission === false ? (
+                  <Text>
+                    Permission denied. Please grant permission to access photos.
+                  </Text>
+                ) : (
+                  <>
+                    <Picker
+                      selectedValue={selectedAlbum}
+                      onValueChange={(itemValue) => setSelectedAlbum(itemValue)}
+                    >
+                      {albums.map((album) => (
+                        <Picker.Item
+                          key={album.id}
+                          label={album.title}
+                          value={album.id}
+                        />
+                      ))}
+                    </Picker>
+                    {loading ? (
+                      <ActivityIndicator size="large" color="#0000ff" />
+                    ) : (
+                      <FlatList
+                        data={photoUris}
+                        keyExtractor={(item) => item}
+                        renderItem={renderItem}
+                        numColumns={4}
+                        initialNumToRender={50}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={loading && <ActivityIndicator />}
+                      />
+                    )}
+                  </>
+                )}
+              </BottomSheetView>
+            </BottomSheet>
+          </>
         </KeyboardAvoidingView>
       </ImageBackground>
     </View>
@@ -475,11 +697,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     width: "100%",
+    height: "100%",
   },
   inputContainer: {
     flexDirection: "row",
     padding: 10,
     backgroundColor: Colors.light.background,
+    alignItems: "center",
+    paddingBottom: heightPercentageToDP(4),
   },
   textInput: {
     flex: 1,
@@ -490,6 +715,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sendButton: {
+    backgroundColor: Colors.light.primary,
+    borderRadius: 20,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  micIcon: {
     backgroundColor: Colors.light.primary,
     borderRadius: 20,
     padding: 10,
@@ -622,6 +854,8 @@ const styles = StyleSheet.create({
     height: heightPercentageToDP(10),
     top: "20%",
   },
+  imageGallery: { width: 100, height: 100 },
+  photoContainer: { height: "100%" },
 });
 
 export default ChatRoom;

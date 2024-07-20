@@ -16,6 +16,7 @@
     "app/(inApp)/(tabs)/_layout.js",
     "app/(inApp)/(taskform)/Goal.tsxxx",
     "app/(inApp)/(taskform)/Reminder.js",
-    "app/(inApp)/(messages)/Messages.js"
+    "app/(inApp)/(messages)/Messages.js",
+    "app/(inApp)/(tabs)/Voicenote.js"
   ]
 }

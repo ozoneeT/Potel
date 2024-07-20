@@ -11,7 +11,6 @@ import {
   Animated,
   Button,
 } from "react-native";
-import ChatBubble from "react-native-chat-bubble";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import messagesData from "@/context/messages.json";
 
@@ -42,15 +41,7 @@ const AnimatedMessage = ({ text, sent }) => {
         { opacity, transform: [{ translateY }] },
       ]}
     >
-      <ChatBubble
-        isOwnMessage={true}
-        bubbleColor="#1084ff"
-        tailColor="#1084ff"
-        withTail={true}
-        onPress={() => console.log("Bubble Pressed!")}
-      >
-        <Text style={styles.messageText}>{text}</Text>
-      </ChatBubble>
+      <Text style={styles.messageText}>{text}</Text>
     </Animated.View>
   );
 };
