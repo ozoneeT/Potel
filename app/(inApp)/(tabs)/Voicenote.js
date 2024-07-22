@@ -1,25 +1,15 @@
+// VoiceNote.js
+
+import React, { useState, useEffect } from "react";
 import { Audio } from "expo-av";
-import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import {
-  Button,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-export default function App() {
+const VoiceNote = () => {
   const [recordings, setRecordings] = useState([]);
   const [recording, setRecording] = useState(null);
-  const [recordingName, setRecordingName] = useState("");
   const [playing, setPlaying] = useState(-1);
   const [sound, setSound] = useState(null);
-  const [isDialogVisible, setDialogVisible] = useState(false);
 
   async function startRecording() {
     try {
@@ -32,33 +22,37 @@ export default function App() {
       let { recording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
-      audio = recording;
       setRecording(recording);
     } catch (err) {
       console.error("Failed to start recording", err);
     }
   }
+
   async function stopRecording() {
-    await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
-    setDialogVisible(true);
-  }
-  const handleSaveRecording = () => {
-    if (recordingName.trim() !== "") {
+    try {
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+      });
+
+      const uri = recording.getURI();
+      console.log("Recording URI: ", uri);
+
       setRecordings([
         ...recordings,
         {
-          name: recordingName,
+          name: `Recording ${recordings.length + 1}`,
           recording: recording,
         },
       ]);
-      setRecording(undefined);
-      setDialogVisible(false);
-      setRecordingName("");
+
+      setRecording(null);
+      // Add code here to send the voice note
+    } catch (err) {
+      console.error("Failed to stop recording", err);
     }
-  };
+  }
+
   useEffect(() => {
     return sound
       ? () => {
@@ -67,94 +61,60 @@ export default function App() {
         }
       : undefined;
   }, [sound]);
+
   return (
     <View style={styles.container}>
-      <StatusBar style="auto" />
-      <Text style={styles.heading}>Welcome to GeeksforGeeks</Text>
-
-      <Modal
-        visible={isDialogVisible}
-        animationType="slide"
-        style={styles.modal}
-      >
-        <View style={styles.column}>
-          <Text>Enter Recording Name:</Text>
-          <TextInput
-            style={{
-              height: 40,
-              borderColor: "gray",
-              borderWidth: 1,
-              marginBottom: 10,
-              padding: 10,
-              width: 200,
-              borderRadius: 20,
-            }}
-            onChangeText={(text) => setRecordingName(text)}
-            value={recordingName}
-          />
-          <Pressable style={styles.button} onPress={handleSaveRecording}>
-            <Text>Save</Text>
-          </Pressable>
-          <Pressable
-            style={styles.button}
-            onPress={() => setDialogVisible(false)}
-          >
-            <Text>Cancel</Text>
-          </Pressable>
-        </View>
-      </Modal>
+      <Text style={styles.heading}>Voice Note Component</Text>
       <View style={styles.list}>
-        {recordings.map((recording, index) => {
-          return (
-            <View key={index}>
-              <TouchableOpacity
-                onPress={async () => {
-                  const { sound } =
-                    await recording.recording.createNewLoadedSoundAsync(
-                      {
-                        isLooping: false,
-                        isMuted: false,
-                        volume: 1.0,
-                        rate: 1.0,
-                        shouldCorrectPitch: true,
-                      },
-                      (status) => {
-                        // console.log(status)
-                      },
-                      false
-                    );
-                  setSound(sound);
-                  setPlaying(index);
-                  await sound.playAsync();
-                  await sound.setOnPlaybackStatusUpdate(async (status) => {
-                    if (status.didJustFinish) {
-                      setPlaying(-1);
-                      await sound.unloadAsync();
-                    }
-                  });
-                }}
-                style={styles.playButton}
+        {recordings.map((recording, index) => (
+          <View key={index}>
+            <TouchableOpacity
+              onPress={async () => {
+                const { sound } =
+                  await recording.recording.createNewLoadedSoundAsync(
+                    {
+                      isLooping: false,
+                      isMuted: false,
+                      volume: 1.0,
+                      rate: 1.0,
+                      shouldCorrectPitch: true,
+                    },
+                    (status) => {
+                      // console.log(status)
+                    },
+                    false
+                  );
+                setSound(sound);
+                setPlaying(index);
+                await sound.playAsync();
+                await sound.setOnPlaybackStatusUpdate(async (status) => {
+                  if (status.didJustFinish) {
+                    setPlaying(-1);
+                    await sound.unloadAsync();
+                  }
+                });
+              }}
+              style={styles.playButton}
+            >
+              <Ionicons
+                name={playing !== index ? "play" : "pause"}
+                size={30}
+                color="white"
               >
-                <Ionicons
-                  name={playing !== index ? "play" : "pause"}
-                  size={30}
-                  color="white"
-                >
-                  <Text style={styles.recordingName}>{recording.name}</Text>
-                </Ionicons>
+                <Text style={styles.recordingName}>{recording.name}</Text>
+              </Ionicons>
 
-                <Ionicons
-                  name="trash"
-                  size={30}
-                  color="white"
-                  onPress={() => {
-                    setRecordings(recordings.filter((rec, i) => i !== index));
-                  }}
-                />
-              </TouchableOpacity>
-            </View>
-          );
-        })}
+              <Ionicons
+                name="trash"
+                size={30}
+                color="white"
+                onPress={() => {
+                  setRecordings(recordings.filter((rec, i) => i !== index));
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
       <View
         style={{
@@ -167,9 +127,10 @@ export default function App() {
           padding: 10,
         }}
       >
-        <Pressable
+        <TouchableOpacity
           style={styles.button}
-          onPress={recording ? stopRecording : startRecording}
+          onLongPress={startRecording}
+          onPressOut={stopRecording}
         >
           <Text
             style={{
@@ -178,11 +139,11 @@ export default function App() {
           >
             {recording ? "Stop Recording" : "Start Recording"}
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   row: {
@@ -196,12 +157,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-  },
-  column: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
   },
   heading: {
     color: "green",
@@ -242,3 +197,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
+
+export default VoiceNote;

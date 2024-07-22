@@ -58,6 +58,8 @@ import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system";
 import { Picker } from "@react-native-picker/picker";
 import { Audio } from "expo-av";
+import VoiceMessage from "@/components/Voicemessage";
+import * as ImagePicker from "expo-image-picker";
 
 dayjs.extend(relativeTime);
 
@@ -73,6 +75,14 @@ const ChatRoom = () => {
   const senderImage = route.params?.senderImage;
   const [typingDisplay, setTypingDisplay] = useState("none");
   const [typing, setTyping] = useState(false);
+  const [recordings, setRecordings] = useState([]);
+  const [recording, setRecording] = useState(null);
+  const [playing, setPlaying] = useState(-1);
+  const [sound, setSound] = useState(null);
+
+  const handleDelete = (id) => {
+    setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
+  };
 
   const handleSendMessage = useCallback(() => {
     setTyping(false);
@@ -87,6 +97,7 @@ const ChatRoom = () => {
       const newMsg = {
         id: messages.length + 1,
         text: messageToSend,
+        type: "text",
         createdAt: new Date().toISOString(),
         user: { id: "u1", name: "User" }, // assuming "u1" is the current user
       };
@@ -127,12 +138,120 @@ const ChatRoom = () => {
     return message.user.id === "u1"; // assuming "u1" is the current user
   }, []);
 
+  async function startRecording() {
+    try {
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      let { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(recording);
+    } catch (err) {
+      console.error("Failed to start recording", err);
+    }
+  }
+
+  async function stopRecording() {
+    try {
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+      });
+
+      const uri = recording.getURI();
+      console.log("Recording URI: ", uri);
+
+      const newVoiceMessage = {
+        id: messages.length + 1,
+        type: "voice",
+        text: "Voice",
+        uri: uri,
+        createdAt: new Date().toISOString(),
+        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
+      };
+
+      setMessages([newVoiceMessage, ...messages]);
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+
+      setRecording(null);
+    } catch (err) {
+      console.error("Failed to stop recording", err);
+    }
+  }
+
+  useEffect(() => {
+    return sound
+      ? () => {
+          sound.unloadAsync();
+          console.log("Unloaded Sound");
+        }
+      : undefined;
+  }, [sound]);
+
+  const MessageItemRender = ({ item }) => {
+    const myMessage = isMyMessage(item);
+    const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
+    swipeableRefs.current[item.id] = swipeableRef;
+    if (item.type === "text") {
+      return (
+        <>
+          {item.text.includes("Replying to:") && (
+            <Text style={styles.replyingText}>
+              {item.text.split("\n\n")[0]}
+            </Text>
+          )}
+          <Text
+            style={[
+              styles.messageText,
+              myMessage ? styles.myMessageText : styles.otherMessageText,
+            ]}
+          >
+            {item.text.includes("Replying to:")
+              ? item.text.split("\n\n")[1]
+              : item.text}
+          </Text>
+          <Text
+            style={[
+              styles.messageTime,
+              myMessage ? styles.myMessageTime : styles.otherMessageTime,
+            ]}
+          >
+            {dayjs(item.createdAt).format("h:mm A")}
+          </Text>
+        </>
+      );
+    }
+
+    if (item.type === "voice") {
+      return (
+        <>
+          <VoiceMessage message={item} onDelete={handleDelete} />
+        </>
+      );
+    }
+
+    if (item.type === "image") {
+      return (
+        <Image
+          source={{ uri: item.uri }}
+          width={100}
+          height={100}
+          resizeMode="center"
+          style={{ borderRadius: 15 }}
+        />
+      );
+    }
+  };
+
   const renderMessageItem = useCallback(
     ({ item }) => {
       const myMessage = isMyMessage(item);
       const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
       swipeableRefs.current[item.id] = swipeableRef;
-
       const renderLeftActions = (progress, dragX) => {
         const trans = dragX.interpolate({
           inputRange: [0, 50, 100, 101],
@@ -152,11 +271,7 @@ const ChatRoom = () => {
         return (
           <RectButton
             style={styles.leftAction}
-            onPress={() => [
-              swipeableRef.current.close(),
-              console.log("close"),
-              ,
-            ]}
+            onPress={() => [swipeableRef.current.close(), console.log("close")]}
           >
             <Animated.View
               style={[
@@ -180,11 +295,18 @@ const ChatRoom = () => {
           </RectButton>
         );
       };
+
       const onSwipeableWillOpen = (item) => {
         const originalText = item.text.includes("Replying to:")
           ? item.text.split("\n\n")[1]
           : item.text;
         setReplyingText(originalText);
+      };
+
+      const handleDelete = (id) => {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== id)
+        );
       };
 
       return (
@@ -239,35 +361,7 @@ const ChatRoom = () => {
                         ],
                   ]}
                 >
-                  <View>
-                    {item.text.includes("Replying to:") && (
-                      <Text style={styles.replyingText}>
-                        {item.text.split("\n\n")[0]}
-                      </Text>
-                    )}
-                    <Text
-                      style={[
-                        styles.messageText,
-                        myMessage
-                          ? styles.myMessageText
-                          : styles.otherMessageText,
-                      ]}
-                    >
-                      {item.text.includes("Replying to:")
-                        ? item.text.split("\n\n")[1]
-                        : item.text}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.messageTime,
-                        myMessage
-                          ? styles.myMessageTime
-                          : styles.otherMessageTime,
-                      ]}
-                    >
-                      {dayjs(item.createdAt).format("h:mm A")}
-                    </Text>
-                  </View>
+                  <MessageItemRender item={item} />
                 </View>
               </Swipeable>
             </MenuTrigger>
@@ -368,115 +462,42 @@ const ChatRoom = () => {
     }
   };
 
-  const [hasPermission, setHasPermission] = useState(null);
-  const [albums, setAlbums] = useState([]);
-  const [selectedAlbum, setSelectedAlbum] = useState(null);
-  const [photos, setPhotos] = useState([]);
-  const [photoUris, setPhotoUris] = useState([]);
-  const [loading, setLoading] = useState(false);
+  //BottomSheet component
+
+  const [image, setImage] = useState(null);
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+
+      const newImage = {
+        id: messages.length + 1,
+        type: "image",
+        text: "Image",
+        uri: image,
+        createdAt: new Date().toISOString(),
+        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
+      };
+      setMessages([newImage, ...messages]);
+      bottomSheetRef.current?.close();
+    }
+  };
+
   const bottomSheetRef = useRef(null);
 
-  const snapPoints = useMemo(() => ["25%", "50%", "100%"], []);
-
-  // Function to request permissions
-  const requestPermissions = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status === "granted") {
-      setHasPermission(true);
-      fetchAlbums();
-    } else {
-      setHasPermission(false);
-      Alert.alert(
-        "Permission Required",
-        "Permission to access photos is required. Please grant permission in your device settings.",
-        [
-          { text: "Retry", onPress: requestPermissions },
-          { text: "Cancel", onPress: () => console.log("Permission denied") },
-        ]
-      );
-    }
-  };
-
-  const fetchAlbums = async () => {
-    try {
-      const albums = await MediaLibrary.getAlbumsAsync({
-        includeSmartAlbums: true,
-      });
-      setAlbums(albums);
-      if (albums.length > 0) {
-        setSelectedAlbum(albums[0].id); // Set the album ID instead of the whole album object
-      }
-    } catch (error) {
-      console.error("Error fetching albums:", error);
-    }
-  };
-
-  const fetchPhotos = async (albumId) => {
-    setLoading(true);
-    try {
-      let allPhotos = [];
-      let hasNextPage = true;
-      let cursor = null;
-
-      while (hasNextPage) {
-        const {
-          assets,
-          endCursor,
-          hasNextPage: morePages,
-        } = await MediaLibrary.getAssetsAsync({
-          mediaType: "photo",
-          album: albumId,
-          first: 100,
-          after: cursor,
-        });
-        allPhotos = [...allPhotos, ...assets];
-        cursor = endCursor;
-        hasNextPage = morePages;
-      }
-
-      setPhotos(allPhotos);
-    } catch (error) {
-      console.error("Error fetching photos:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    requestPermissions();
-  }, []);
-
-  useEffect(() => {
-    if (selectedAlbum) {
-      fetchPhotos(selectedAlbum);
-    }
-  }, [selectedAlbum]);
-
-  useEffect(() => {
-    (async () => {
-      if (photos.length > 0) {
-        try {
-          const uris = await Promise.all(
-            photos.map(async (photo) => {
-              const info = await MediaLibrary.getAssetInfoAsync(photo.id);
-              return info.localUri || info.uri;
-            })
-          );
-          setPhotoUris(uris);
-        } catch (error) {
-          console.error("Error fetching photo URIs:", error);
-        }
-      }
-    })();
-  }, [photos]);
+  const snapPoints = useMemo(() => ["30%"], []);
 
   const handleOpenPress = () => {
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.snapToIndex(0);
   };
-
-  const renderItem = ({ item }) => (
-    <Image source={{ uri: item }} style={styles.imageGallery} />
-  );
 
   return (
     <View style={styles.safeArea}>
@@ -611,7 +632,11 @@ const ChatRoom = () => {
             />
 
             {!typing && (
-              <Pressable style={styles.micIcon}>
+              <Pressable
+                style={styles.micIcon}
+                onPressOut={stopRecording}
+                onLongPress={startRecording}
+              >
                 <Ionicons
                   name="mic"
                   size={20}
@@ -641,41 +666,19 @@ const ChatRoom = () => {
               ref={bottomSheetRef}
             >
               <BottomSheetView style={styles.contentContainer}>
-                {hasPermission === null ? (
-                  <Text>Requesting permission...</Text>
-                ) : hasPermission === false ? (
-                  <Text>
-                    Permission denied. Please grant permission to access photos.
-                  </Text>
-                ) : (
-                  <>
-                    <Picker
-                      selectedValue={selectedAlbum}
-                      onValueChange={(itemValue) => setSelectedAlbum(itemValue)}
-                    >
-                      {albums.map((album) => (
-                        <Picker.Item
-                          key={album.id}
-                          label={album.title}
-                          value={album.id}
-                        />
-                      ))}
-                    </Picker>
-                    {loading ? (
-                      <ActivityIndicator size="large" color="#0000ff" />
-                    ) : (
-                      <FlatList
-                        data={photoUris}
-                        keyExtractor={(item) => item}
-                        renderItem={renderItem}
-                        numColumns={4}
-                        initialNumToRender={50}
-                        onEndReachedThreshold={0.5}
-                        ListFooterComponent={loading && <ActivityIndicator />}
-                      />
-                    )}
-                  </>
-                )}
+                <View>
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    style={{
+                      backgroundColor: "gray",
+                      padding: 10,
+                      width: 70,
+                      margin: 10,
+                    }}
+                  >
+                    <Entypo name="camera" size={24} color="black" />
+                  </TouchableOpacity>
+                </View>
               </BottomSheetView>
             </BottomSheet>
           </>
