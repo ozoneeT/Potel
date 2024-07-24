@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   FlatList,
-  Animated,
   Image,
   TouchableOpacity,
   Keyboard,
@@ -58,7 +57,15 @@ import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system";
 import { Picker } from "@react-native-picker/picker";
 import { Audio } from "expo-av";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import VoiceMessage from "@/components/Voicemessage";
+import MemoListItem, { Memo } from "@/components/Memolistitem";
 import * as ImagePicker from "expo-image-picker";
 
 dayjs.extend(relativeTime);
@@ -68,7 +75,7 @@ const ChatRoom = () => {
   const [newMessage, setNewMessage] = useState("");
   const flatListRef = useRef(null);
   const swipeableRefs = useRef({});
-  const [replyingText, setReplyingText] = useState();
+  const [replyingText, setReplyingText] = useState("");
   const textInputRef = useRef(null);
   const route = useRoute();
   const sender = route.params?.sender;
@@ -76,17 +83,24 @@ const ChatRoom = () => {
   const [typingDisplay, setTypingDisplay] = useState("none");
   const [typing, setTyping] = useState(false);
   const [recordings, setRecordings] = useState([]);
-  const [recording, setRecording] = useState(null);
   const [playing, setPlaying] = useState(-1);
   const [sound, setSound] = useState(null);
+  const [recording, setRecording] = useState(null);
+  const [audioMetering, setAudioMetering] = useState([]);
+  const metering = useSharedValue(-100);
+  const [image, setImage] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   const handleDelete = (id) => {
     setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
   };
 
-  const handleSendMessage = useCallback(() => {
-    setTyping(false);
+  const handleSendMessage = useCallback(async () => {
     if (newMessage.trim()) {
+      setIsSending(true);
+      setTyping(false);
+
       let messageToSend = newMessage;
 
       if (replyingText) {
@@ -102,9 +116,11 @@ const ChatRoom = () => {
         user: { id: "u1", name: "User" }, // assuming "u1" is the current user
       };
 
-      setMessages([newMsg, ...messages]);
+      setMessages((prevMessages) => [newMsg, ...prevMessages]);
       setNewMessage("");
       flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+
+      setIsSending(false);
     }
   }, [newMessage, messages, replyingText]);
 
@@ -139,59 +155,114 @@ const ChatRoom = () => {
   }, []);
 
   async function startRecording() {
+    setIsRecording(true);
     try {
+      setAudioMetering([]);
+
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      let { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        undefined,
+        100
       );
       setRecording(recording);
+
+      recording.setOnRecordingStatusUpdate((status) => {
+        if (status.metering) {
+          const currentMetering = status.metering || -100;
+          metering.value = currentMetering;
+          setAudioMetering((curVal) => [...curVal, currentMetering]);
+        }
+      });
+
+      setIsRecording(false);
     } catch (err) {
       console.error("Failed to start recording", err);
+      setIsRecording(false);
     }
   }
 
   async function stopRecording() {
+    if (!recording) {
+      return;
+    }
+
     try {
+      setIsRecording(true);
+      console.log("Stopping recording..");
+      setRecording(undefined);
       await recording.stopAndUnloadAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
       });
-
       const uri = recording.getURI();
-      console.log("Recording URI: ", uri);
+      if (uri) {
+        const newVoiceMessage = {
+          id: messages.length + 1,
+          metering: audioMetering,
+          type: "voice",
+          text: "Voice",
+          uri: uri,
+          createdAt: new Date().toISOString(),
+          user: { id: "u1", name: "User" }, // assuming "u1" is the current user
+        };
 
-      const newVoiceMessage = {
-        id: messages.length + 1,
-        type: "voice",
-        text: "Voice",
-        uri: uri,
-        createdAt: new Date().toISOString(),
-        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
-      };
-
-      setMessages([newVoiceMessage, ...messages]);
-      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
-
-      setRecording(null);
+        setMessages((prevMessages) => [newVoiceMessage, ...prevMessages]);
+        flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+      }
+      setIsRecording(false);
     } catch (err) {
       console.error("Failed to stop recording", err);
+      setIsRecording(false);
     }
   }
 
-  useEffect(() => {
-    return sound
-      ? () => {
-          sound.unloadAsync();
-          console.log("Unloaded Sound");
-        }
-      : undefined;
-  }, [sound]);
+  const animatedRecordWave = useAnimatedStyle(() => {
+    const size = withSpring(
+      interpolate(metering.value, [-160, -60, 0], [0, 50, 100]),
+      { damping: 10, stiffness: 100 }
+    );
+    return {
+      width: size / 2,
+      height: size / 2,
+      borderRadius: 200,
+      backgroundColor: `rgba(255, 45, 0, ${interpolate(
+        metering.value,
+        [-160, -60, 0],
+        [0.3, 0.7, 1]
+      )})`,
+    };
+  });
 
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const newImageUri = result.assets[0].uri;
+      setImage(newImageUri);
+
+      const newImage = {
+        id: messages.length + 1,
+        type: "image",
+        text: "Image",
+        uri: newImageUri,
+        createdAt: new Date().toISOString(),
+        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
+      };
+      setMessages([newImage, ...messages]);
+      bottomSheetRef.current?.close();
+    }
+  };
   const MessageItemRender = ({ item }) => {
     const myMessage = isMyMessage(item);
     const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
@@ -228,21 +299,31 @@ const ChatRoom = () => {
 
     if (item.type === "voice") {
       return (
-        <>
-          <VoiceMessage message={item} onDelete={handleDelete} />
-        </>
+        <View style={{ width: "100%", padding: 2 }}>
+          <MemoListItem memo={item} />
+        </View>
       );
     }
 
     if (item.type === "image") {
       return (
-        <Image
-          source={{ uri: item.uri }}
-          width={100}
-          height={100}
-          resizeMode="center"
-          style={{ borderRadius: 15 }}
-        />
+        <View style={{ padding: 5 }}>
+          <Image
+            source={{ uri: item.uri }}
+            resizeMode="cover"
+            style={{ borderRadius: 15, width: "100%" }}
+            aspectRatio={1}
+          />
+          <Text
+            style={[
+              styles.messageTime,
+              { marginTop: 10 },
+              myMessage ? styles.myMessageTime : styles.otherMessageTime,
+            ]}
+          >
+            {dayjs(item.createdAt).format("h:mm A")}
+          </Text>
+        </View>
       );
     }
   };
@@ -311,7 +392,7 @@ const ChatRoom = () => {
 
       return (
         <>
-          <Menu>
+          {/* <Menu>
             <MenuOptions>
               <MenuOption onSelect={() => alert(`Save`)} text="Save" />
               <MenuOption onSelect={() => alert(`Delete`)}>
@@ -324,48 +405,49 @@ const ChatRoom = () => {
               />
             </MenuOptions>
 
-            <MenuTrigger>
-              <Swipeable
-                ref={swipeableRef}
-                renderLeftActions={renderLeftActions}
-                onSwipeableWillOpen={() => [
-                  swipeableRef.current.close(),
-                  onSwipeableWillOpen(item),
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
-                  textInputRef.current.focus(),
-                ]}
-                overshootLeft={false}
-                overshootRight={false}
-                leftThreshold={70}
-                friction={2}
-              >
-                <View
-                  style={[
-                    styles.messageContainer,
-                    myMessage
-                      ? [
-                          styles.myMessage,
-                          {
-                            borderTopEndRadius: 20,
-                            borderTopStartRadius: 20,
-                            borderBottomLeftRadius: 20,
-                          },
-                        ]
-                      : [
-                          styles.otherMessage,
-                          {
-                            borderTopEndRadius: 20,
-                            borderTopStartRadius: 20,
-                            borderBottomRightRadius: 20,
-                          },
-                        ],
-                  ]}
-                >
-                  <MessageItemRender item={item} />
-                </View>
-              </Swipeable>
-            </MenuTrigger>
-          </Menu>
+            <MenuTrigger> */}
+          <Swipeable
+            ref={swipeableRef}
+            renderLeftActions={renderLeftActions}
+            onSwipeableWillOpen={() => [
+              swipeableRef.current.close(),
+              onSwipeableWillOpen(item),
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+              textInputRef.current.focus(),
+            ]}
+            overshootLeft={false}
+            overshootRight={false}
+            leftThreshold={70}
+            friction={2}
+          >
+            <View
+              style={[
+                styles.messageContainer,
+                item.type === "voice" && { width: "100%" },
+                myMessage
+                  ? [
+                      styles.myMessage,
+                      {
+                        borderTopEndRadius: 20,
+                        borderTopStartRadius: 20,
+                        borderBottomLeftRadius: 20,
+                      },
+                    ]
+                  : [
+                      styles.otherMessage,
+                      {
+                        borderTopEndRadius: 20,
+                        borderTopStartRadius: 20,
+                        borderBottomRightRadius: 20,
+                      },
+                    ],
+              ]}
+            >
+              <MessageItemRender item={item} />
+            </View>
+          </Swipeable>
+          {/* </MenuTrigger>
+          </Menu> */}
         </>
       );
     },
@@ -463,33 +545,6 @@ const ChatRoom = () => {
   };
 
   //BottomSheet component
-
-  const [image, setImage] = useState(null);
-
-  const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-
-      const newImage = {
-        id: messages.length + 1,
-        type: "image",
-        text: "Image",
-        uri: image,
-        createdAt: new Date().toISOString(),
-        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
-      };
-      setMessages([newImage, ...messages]);
-      bottomSheetRef.current?.close();
-    }
-  };
 
   const bottomSheetRef = useRef(null);
 
@@ -623,6 +678,8 @@ const ChatRoom = () => {
             <TouchableOpacity style={{ padding: 5 }} onPress={handleOpenPress}>
               <Ionicons name="attach" size={24} color="black" />
             </TouchableOpacity>
+            {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
+
             <TextInput
               ref={textInputRef}
               style={styles.textInput}
@@ -630,6 +687,16 @@ const ChatRoom = () => {
               onChangeText={handleTextChange}
               placeholder="Type a message"
             />
+            {recording && (
+              <View>
+                <LottieView
+                  style={styles.recordingWave}
+                  source={require("@/assets/lottie/soundwaveprimary.json")}
+                  autoPlay
+                  loop
+                />
+              </View>
+            )}
 
             {!typing && (
               <Pressable
@@ -732,7 +799,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   messageContainer: {
-    padding: 10,
     marginVertical: 5,
     maxWidth: "80%",
     marginRight: 20,
@@ -747,6 +813,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 16,
+    padding: 10,
   },
   myMessageText: {
     color: Colors.light.text,
@@ -757,6 +824,8 @@ const styles = StyleSheet.create({
   messageTime: {
     fontSize: 12,
     alignSelf: "flex-end",
+    paddingHorizontal: 10,
+    paddingBottom: 5,
   },
   myMessageTime: {
     color: Colors.light.subText,
@@ -839,7 +908,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: "bold",
     color: Colors.light.text,
-    fontFamily: "puppinsSemiBold",
+    fontFamily: "PoppinsSemiBold",
     marginLeft: 10,
   },
   headerIcons: {
@@ -859,6 +928,19 @@ const styles = StyleSheet.create({
   },
   imageGallery: { width: 100, height: 100 },
   photoContainer: { height: "100%" },
+  recordWave: {
+    position: "absolute",
+    backgroundColor: Colors.light.primary,
+    opacity: 0.5,
+    right: 0,
+  },
+  recordingWave: {
+    width: 100,
+    height: 100,
+    position: "absolute",
+    left: -30,
+    bottom: -50,
+  },
 });
 
 export default ChatRoom;

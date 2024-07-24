@@ -120,7 +120,7 @@ const Messaging = () => {
   return (
     <SafeAreaView
       style={[
-        Platform.OS === "android" ? { marginTop: headerHight } : null,
+        Platform.OS === "android" ? { marginTop: 20 } : null,
         { flex: 1 },
       ]}
     >

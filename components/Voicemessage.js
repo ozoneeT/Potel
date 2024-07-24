@@ -23,7 +23,32 @@ const VoiceMessage = ({ message, onDelete }) => {
     };
 
     loadSound();
+
+    // Cleanup function to release the sound object when the component unmounts
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
   }, [message.uri]);
+
+  useEffect(() => {
+    if (sound) {
+      const onPlaybackStatusUpdate = (status) => {
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+          sound.setPositionAsync(0);
+          sound.pauseAsync();
+        }
+      };
+
+      sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+
+      return () => {
+        sound.setOnPlaybackStatusUpdate(null); // Remove the playback status update listener
+      };
+    }
+  }, [sound]);
 
   const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -38,16 +63,17 @@ const VoiceMessage = ({ message, onDelete }) => {
       await sound.pauseAsync();
       setIsPlaying(false);
     } else {
-      await sound.playFromPositionAsync(0);
+      await sound.playAsync();
       setIsPlaying(true);
-
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.didJustFinish) {
-          setIsPlaying(false);
-          sound.setPositionAsync(0); // Reset the playback position to the beginning
-        }
-      });
     }
+  };
+
+  const handleDelete = (id) => {
+    if (isPlaying) {
+      sound.stopAsync();
+      setIsPlaying(false);
+    }
+    onDelete(id);
   };
 
   return (
@@ -60,7 +86,7 @@ const VoiceMessage = ({ message, onDelete }) => {
       </View>
       {/* <Text>{dayjs(message.createdAt).format("h:mm A")}</Text> */}
       <TouchableOpacity
-        onPress={() => onDelete(message.id)}
+        onPress={() => handleDelete(message.id)}
         style={styles.deleteButton}
       >
         <Ionicons name="trash" size={24} color="red" />
