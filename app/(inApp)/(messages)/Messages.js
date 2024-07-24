@@ -67,6 +67,7 @@ import Animated, {
 import VoiceMessage from "@/components/Voicemessage";
 import MemoListItem, { Memo } from "@/components/Memolistitem";
 import * as ImagePicker from "expo-image-picker";
+import { BlurView } from "expo-blur";
 
 dayjs.extend(relativeTime);
 
@@ -91,6 +92,7 @@ const ChatRoom = () => {
   const [image, setImage] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const lottieRef = useRef(null);
 
   const handleDelete = (id) => {
     setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
@@ -154,10 +156,10 @@ const ChatRoom = () => {
     return message.user.id === "u1"; // assuming "u1" is the current user
   }, []);
 
-  async function startRecording() {
-    setIsRecording(true);
+  async function StartRecording() {
     try {
       setAudioMetering([]);
+      setIsRecording(true);
 
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
@@ -179,11 +181,8 @@ const ChatRoom = () => {
           setAudioMetering((curVal) => [...curVal, currentMetering]);
         }
       });
-
-      setIsRecording(false);
     } catch (err) {
       console.error("Failed to start recording", err);
-      setIsRecording(false);
     }
   }
 
@@ -193,7 +192,7 @@ const ChatRoom = () => {
     }
 
     try {
-      setIsRecording(true);
+      setIsRecording(false);
       console.log("Stopping recording..");
       setRecording(undefined);
       await recording.stopAndUnloadAsync();
@@ -215,10 +214,8 @@ const ChatRoom = () => {
         setMessages((prevMessages) => [newVoiceMessage, ...prevMessages]);
         flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
       }
-      setIsRecording(false);
     } catch (err) {
       console.error("Failed to stop recording", err);
-      setIsRecording(false);
     }
   }
 
@@ -444,6 +441,7 @@ const ChatRoom = () => {
                     ],
               ]}
             >
+              <View></View>
               <MessageItemRender item={item} />
             </View>
           </Swipeable>
@@ -557,6 +555,18 @@ const ChatRoom = () => {
 
   return (
     <View style={styles.safeArea}>
+      {isRecording && (
+        <BlurView intensity={20} style={styles.absolute}>
+          <LottieView
+            ref={lottieRef}
+            source={require("@/assets/lottie/soundwaveprimary.json")}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
+        </BlurView>
+      )}
+
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Entypo name="chevron-left" size={24} color={Colors.light.text} />
@@ -636,6 +646,7 @@ const ChatRoom = () => {
               )
             }
           />
+
           {linkMetadata && (
             <View>
               {linkMetadata.image && (
@@ -686,22 +697,12 @@ const ChatRoom = () => {
               onChangeText={handleTextChange}
               placeholder="Type a message"
             />
-            {recording && (
-              <View>
-                <LottieView
-                  style={styles.recordingWave}
-                  source={require("@/assets/lottie/soundwaveprimary.json")}
-                  autoPlay
-                  loop
-                />
-              </View>
-            )}
 
             {!typing && (
               <Pressable
                 style={styles.micIcon}
                 onPressOut={stopRecording}
-                onLongPress={startRecording}
+                onLongPress={StartRecording}
               >
                 <Ionicons
                   name="mic"
@@ -774,6 +775,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.background,
     alignItems: "center",
     paddingBottom: heightPercentageToDP(4),
+    zIndex: 1000,
   },
   textInput: {
     flex: 1,
@@ -934,11 +936,27 @@ const styles = StyleSheet.create({
     right: 0,
   },
   recordingWave: {
-    width: 100,
-    height: 100,
+    width: 1000,
+    height: 1000,
     position: "absolute",
     left: -30,
     bottom: -50,
+  },
+  absolute: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    bottom: 0,
+    zIndex: 1,
+  },
+  lottie: {
+    width: 300,
+    height: 300,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
 
