@@ -361,8 +361,8 @@ const ChatRoom = () => {
                   width: widthPercentageToDP(20),
                   height: "100%",
                   justifyContent: "center",
-                  opacity,
-                  transform: [{ scale }],
+                  // opacity,
+                  // transform: [{ scale }],
                 },
                 myMessage && { alignItems: "flex-end" },
               ]}
@@ -419,6 +419,7 @@ const ChatRoom = () => {
             overshootRight={false}
             leftThreshold={70}
             friction={2}
+            containerStyle={{ paddingHorizontal: 10 }}
           >
             <View
               style={[
@@ -602,9 +603,7 @@ const ChatRoom = () => {
             ref={flatListRef}
             keyboardDismissMode="interactive"
             data={groupedMessagesArray}
-            contentContainerStyle={{
-              paddingLeft: 20,
-            }}
+            contentContainerStyle={{}}
             keyExtractor={(item) => item.date}
             renderItem={({ item }) => (
               <View>
@@ -617,7 +616,7 @@ const ChatRoom = () => {
                   .slice()
                   .reverse()
                   .map((message) => (
-                    <View key={message.id}>
+                    <View style={{}} key={message.id}>
                       {renderMessageItem({ item: message })}
                     </View>
                   ))}
@@ -801,7 +800,7 @@ const styles = StyleSheet.create({
   messageContainer: {
     marginVertical: 5,
     maxWidth: "80%",
-    marginRight: 20,
+    // marginRight: 20,
   },
   myMessage: {
     backgroundColor: Colors.light.primary,
