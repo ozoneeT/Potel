@@ -29,6 +29,7 @@ import { Platform } from "react-native";
 dayjs.extend(relativeTime);
 import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
+import Card from "@/components/Card";
 
 const Messaging = () => {
   const [selectedIndex, setSelectedIndex] = useState("All");
@@ -131,40 +132,48 @@ const Messaging = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <Chats item={item} navigation={navigation} />}
         ListHeaderComponent={
-          <View style={styles.headerContainer}>
-            <View style={styles.segmentContainer}>
-              <FlashList
-                estimatedItemSize={20}
-                data={[
-                  "All",
-                  "Unreads",
-                  "Groups",
-                  "LikeMinded",
-                  "Collaboration",
-                ]}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                renderItem={({ item }) => {
-                  return (
-                    <Pressable
-                      onPress={() => [
-                        setSelectedIndex(item),
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
-                      ]}
-                      style={[
-                        styles.segment,
-                        selectedIndex === item && {
-                          backgroundColor: Colors.dark.primary,
-                        },
-                      ]}
-                    >
-                      <Text>{item}</Text>
-                    </Pressable>
-                  );
-                }}
-              />
-            </View>
-          </View>
+          // <View style={styles.headerContainer}>
+          //   <View style={styles.segmentContainer}>
+          //     <FlashList
+          //       estimatedItemSize={20}
+          //       data={[
+          //         "All",
+          //         "Unreads",
+          //         "Groups",
+          //         "LikeMinded",
+          //         "Collaboration",
+          //       ]}
+          //       horizontal
+          //       showsHorizontalScrollIndicator={false}
+          //       renderItem={({ item }) => {
+          //         return (
+          //           <Pressable
+          //             onPress={() => [
+          //               setSelectedIndex(item),
+          //               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+          //             ]}
+          //             style={[
+          //               styles.segment,
+          //               selectedIndex === item && {
+          //                 backgroundColor: Colors.dark.primary,
+          //               },
+          //             ]}
+          //           >
+          //             <Text>{item}</Text>
+          //           </Pressable>
+          //         );
+          //       }}
+          //     />
+          //   </View>
+          // </View>
+          <>
+            <Card
+              cardText={chats[0].msg}
+              cardImage={chats[0].img}
+              cardHeadline={chats[0].from}
+              cardTime={"7/16/24"}
+            ></Card>
+          </>
         }
         contentContainerStyle={{
           paddingBottom: 40,

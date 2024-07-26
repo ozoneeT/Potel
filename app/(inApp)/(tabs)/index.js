@@ -38,6 +38,7 @@ import Animated, {
 import LottieView from "lottie-react-native";
 import PotelHead from "@/assets/images/potelHead.png";
 import RadarGray from "@/assets/lottie/RadarGray.json";
+import Card from "@/components/Card";
 
 export default function Home() {
   const { logout, user } = useAuth();
@@ -134,6 +135,7 @@ export default function Home() {
             />
           </View>
         </Animated.View>
+        <Card cardText={"hello"} cardTime={"7/12/24"}></Card>
         <View
           style={{
             width: "120%",
