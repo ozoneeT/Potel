@@ -27,6 +27,7 @@
     "@react-native-segmented-control/segmented-control": "^2.5.2",
     "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/core": "^6.4.16",
+    "@react-navigation/drawer": "^6.7.2",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/stack": "^6.4.1",
     "@reduxjs/toolkit": "^2.2.5",

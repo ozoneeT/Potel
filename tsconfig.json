@@ -18,5 +18,5 @@
     "app/(inApp)/(taskform)/Reminder.js",
     "app/(inApp)/(messages)/Messages.js",
     "app/(inApp)/(tabs)/Voicenote.js"
-  ]
+, "components/AppleStyleSwipeableRow.js", "components/AppleStyleSwipeableRow.js"  ]
 }

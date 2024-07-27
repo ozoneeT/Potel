@@ -135,7 +135,7 @@ export default function Home() {
             />
           </View>
         </Animated.View>
-        <Card cardText={"hello"} cardTime={"7/12/24"}></Card>
+        <Card cardText={"helo"} cardTime={"7/12/24"}></Card>
         <View
           style={{
             width: "120%",

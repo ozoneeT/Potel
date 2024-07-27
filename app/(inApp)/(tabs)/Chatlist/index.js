@@ -32,25 +32,7 @@ import { FlashList } from "@shopify/flash-list";
 import Card from "@/components/Card";
 
 const Messaging = () => {
-  const [selectedIndex, setSelectedIndex] = useState("All");
   const navigation = useNavigation();
-  const flatListRef = useRef(null);
-
-  const rotationAnimation = useSharedValue(0);
-  const startAnimation = () => {
-    rotationAnimation.value = withRepeat(
-      withSequence(
-        withTiming(25, { duration: 150 }),
-        withTiming(0, { duration: 150 })
-      ),
-      4,
-      false
-    );
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotationAnimation.value}deg` }],
-  }));
 
   const Chats = React.memo(({ item }) => {
     const headerHight = useHeaderHeight();
@@ -79,7 +61,7 @@ const Messaging = () => {
         <Pressable
           style={styles.chatContainer}
           onPress={() =>
-            navigation.navigate("(messages)/Messages", {
+            navigation.navigate("(messages)", {
               id: item.id,
               sender: item.from,
               senderImage: item.img,
@@ -119,12 +101,7 @@ const Messaging = () => {
   // Example data for FlatList
 
   return (
-    <SafeAreaView
-      style={[
-        Platform.OS === "android" ? { marginTop: 20 } : null,
-        { flex: 1 },
-      ]}
-    >
+    <View style={{ flex: 1 }}>
       <FlashList
         estimatedItemSize={500}
         data={chats}
@@ -166,21 +143,14 @@ const Messaging = () => {
           //     />
           //   </View>
           // </View>
-          <>
-            <Card
-              cardText={chats[0].msg}
-              cardImage={chats[0].img}
-              cardHeadline={chats[0].from}
-              cardTime={"7/16/24"}
-            ></Card>
-          </>
+          <></>
         }
         contentContainerStyle={{
           paddingBottom: 40,
           backgroundColor: "#fff",
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

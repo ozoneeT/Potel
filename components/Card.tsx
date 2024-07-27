@@ -45,15 +45,16 @@ const Card = ({ cardText, cardImage, cardHeadline, cardTime }) => {
   const [selectedAction, setSelectedAction] = useState<null | TAction>(null);
 
   const gesture = Gesture.Pan()
+
     .onChange((event) => {
-      translateX.value = clamp(translateX.value + event.changeX, -100, 100);
+      translateX.value = clamp(translateX.value + event.changeX, -100, 0);
     })
     .onEnd((event) => {
       translateX.value = withSpring(
         snapPoint(
           event.translationX + translateX.value,
           event.velocityX,
-          [-100, 0, 100]
+          [0, -100]
         ),
         MEDIUM_SPRING_CONFIG
       );
@@ -66,7 +67,7 @@ const Card = ({ cardText, cardImage, cardHeadline, cardTime }) => {
   });
 
   const imageAStyle = useAnimatedStyle(() => {
-    const rotateZ = interpolate(translateX.value, [-90, 0, 90], [-120, 0, 120]);
+    const rotateZ = interpolate(translateX.value, [-90, 0], [-120, 30]);
     return {
       transform: [{ rotateZ: `${rotateZ}deg` }],
     };
@@ -83,15 +84,6 @@ const Card = ({ cardText, cardImage, cardHeadline, cardTime }) => {
     };
   });
 
-  const leftIconStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(translateX.value, [-100, 0], [1, 0]);
-    const translateXIcon = interpolate(translateX.value, [-100, 0], [0, -50]);
-    return {
-      opacity,
-      transform: [{ translateX: translateXIcon }],
-    };
-  });
-
   const handleActionPress = (item: TAction) => {
     translateX.value = withSpring(0, MEDIUM_SPRING_CONFIG);
     setSelectedAction(selectedAction?.id === item.id ? null : item);
@@ -105,24 +97,29 @@ const Card = ({ cardText, cardImage, cardHeadline, cardTime }) => {
     <Animated.View style={[styles.chatContainer, containerAStyle]}>
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.card, animatedStyle]}>
-          <Animated.View style={[styles.leftIconContainer, leftIconStyle]}>
-            <Star color="orange" size={24} />
-          </Animated.View>
           <View style={styles.movableContent}>
-            <View style={styles.chatImage}>
-              <AnimatedImage
-                source={{ uri: cardImage }}
-                style={[
-                  {
-                    width: 50,
-                    height: 50,
-                    borderRadius: 25,
-                    marginRight: 10,
-                  },
-                  imageAStyle,
-                ]}
+            {selectedAction ? (
+              <selectedAction.Icon
+                color={selectedAction.color}
+                fill={selectedAction.color}
+                size={30}
               />
-            </View>
+            ) : (
+              <View style={styles.chatImage}>
+                <AnimatedImage
+                  source={{ uri: cardImage }}
+                  style={[
+                    {
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      marginRight: 10,
+                    },
+                    imageAStyle,
+                  ]}
+                />
+              </View>
+            )}
 
             <View style={styles.chatMessage}>
               <Text style={{ fontWeight: "bold", fontSize: 17 }}>
@@ -170,6 +167,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -182,7 +181,6 @@ const styles = StyleSheet.create({
   movableContent: {
     flexDirection: "row",
     flex: 1,
-    alignItems: "center",
   },
   text: {
     fontSize: 16,
@@ -192,6 +190,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   stationaryContent: {
+    padding: 16,
     alignItems: "flex-end",
     marginLeft: 16,
   },
@@ -205,16 +204,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     columnGap: 4,
     position: "absolute",
+    bottom: 20,
     zIndex: 40,
     right: 16,
-  },
-  leftactions: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 4,
-    position: "absolute",
-    zIndex: 40,
-    right: 50,
   },
   action: {
     backgroundColor: "gray",
@@ -289,11 +281,6 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 23,
     fontFamily: "PoppinsSemiBold",
-  },
-  leftIconContainer: {
-    position: "absolute",
-    left: 10,
-    zIndex: 10,
   },
 });
 
