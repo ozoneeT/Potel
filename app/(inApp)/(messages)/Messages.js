@@ -36,8 +36,8 @@ import {
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { RectButton } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
-import messagesData from "../../../context/messages.json";
-import bg from "../../../assets/images/BG.png";
+import messagesData from "@/context/messages.json";
+import bg from "@/assets/images/BG.png";
 import { Colors } from "@/constants/Colors";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import {
@@ -230,7 +230,7 @@ const ChatRoom = () => {
       borderRadius: 200,
       backgroundColor: `rgba(255, 45, 0, ${interpolate(
         metering.value,
-        [-160, -60, 0],
+        [-120, -60, 0],
         [0.3, 0.7, 1]
       )})`,
     };
@@ -296,7 +296,7 @@ const ChatRoom = () => {
 
     if (item.type === "voice") {
       return (
-        <View style={{ width: "100%", padding: 2 }}>
+        <View style={{ width: "100%" }}>
           <MemoListItem memo={item} />
         </View>
       );

@@ -61,7 +61,7 @@ const Messaging = () => {
         <Pressable
           style={styles.chatContainer}
           onPress={() =>
-            navigation.navigate("(messages)", {
+            navigation.navigate("(messages)/Messages", {
               id: item.id,
               sender: item.from,
               senderImage: item.img,

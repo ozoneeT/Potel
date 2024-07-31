@@ -13,6 +13,7 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
+import { Colors } from "@/constants/Colors";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { heightPercentageToDP } from "react-native-responsive-screen";
@@ -132,17 +133,18 @@ const MemoListItem = ({ memo }) => {
                 {
                   height: interpolate(
                     db,
-                    [
-                      heightPercentageToDP(Platform.OS === "ios" ? -10 : -30),
-                      0,
-                    ],
+                    [heightPercentageToDP(Platform.OS === "ios" ? -4 : -30), 0],
                     [5, 50],
                     Extrapolate.CLAMP
                   ),
                   borderColor:
-                    progress > index / lines.length ? "royalblue" : "gainsboro",
+                    progress > index / lines.length
+                      ? Colors.light.primary
+                      : "gainsboro",
                   backgroundColor:
-                    progress > index / lines.length ? "royalblue" : "gainsboro",
+                    progress > index / lines.length
+                      ? Colors.light.primary
+                      : "gainsboro",
                 },
               ]}
             />
