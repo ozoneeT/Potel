@@ -264,32 +264,122 @@ const ChatRoom = () => {
     const myMessage = isMyMessage(item);
     const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
     swipeableRefs.current[item.id] = swipeableRef;
+
+    const renderLeftActions = (progress, dragX) => {
+      const trans = dragX.interpolate({
+        inputRange: [0, 50, 100, 101],
+        outputRange: [-20, 0, 0, 1],
+      });
+
+      const opacity = progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1],
+      });
+
+      const scale = progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.8, 1],
+      });
+
+      return (
+        <RectButton
+          style={styles.leftAction}
+          onPress={() => [swipeableRef.current.close(), console.log("close")]}
+        >
+          <Animated.View
+            style={[
+              styles.replyImageWrapper,
+              {
+                width: widthPercentageToDP(20),
+                height: "100%",
+                justifyContent: "center",
+                // opacity,
+                // transform: [{ scale }],
+              },
+              myMessage && { alignItems: "flex-end" },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="reply-circle"
+              size={26}
+              color={Colors.dark.backgroundGrayText}
+            />
+          </Animated.View>
+        </RectButton>
+      );
+    };
+
+    const onSwipeableWillOpen = (item) => {
+      const originalText = item.text.includes("Replying to:")
+        ? item.text.split("\n\n")[1]
+        : item.text;
+      setReplyingText(originalText);
+    };
     if (item.type === "text") {
       return (
         <>
-          {item.text.includes("Replying to:") && (
-            <Text style={styles.replyingText}>
-              {item.text.split("\n\n")[0]}
-            </Text>
-          )}
-          <Text
-            style={[
-              styles.messageText,
-              myMessage ? styles.myMessageText : styles.otherMessageText,
+          <Swipeable
+            ref={swipeableRef}
+            renderLeftActions={renderLeftActions}
+            onSwipeableWillOpen={() => [
+              swipeableRef.current.close(),
+              onSwipeableWillOpen(item),
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+              textInputRef.current.focus(),
+            ]}
+            overshootLeft={false}
+            overshootRight={false}
+            leftThreshold={70}
+            friction={2}
+            containerStyle={[
+              !myMessage && { paddingRight: 10, marginHorizontal: 20 },
             ]}
           >
-            {item.text.includes("Replying to:")
-              ? item.text.split("\n\n")[1]
-              : item.text}
-          </Text>
-          <Text
-            style={[
-              styles.messageTime,
-              myMessage ? styles.myMessageTime : styles.otherMessageTime,
-            ]}
-          >
-            {dayjs(item.createdAt).format("h:mm A")}
-          </Text>
+            <View
+              style={[
+                { backgroundColor: "red" },
+                myMessage
+                  ? [
+                      {
+                        borderTopEndRadius: 20,
+                        borderTopStartRadius: 20,
+                        borderBottomLeftRadius: 20,
+                      },
+                    ]
+                  : [
+                      {
+                        borderTopEndRadius: 20,
+                        borderTopStartRadius: 20,
+                        borderBottomRightRadius: 20,
+                      },
+                    ],
+              ]}
+            >
+              {item.text.includes("Replying to:") && (
+                <Text style={styles.replyingText}>
+                  {item.text.split("\n\n")[0]}
+                </Text>
+              )}
+              <Text
+                style={[
+                  styles.messageText,
+                  myMessage ? styles.myMessageText : styles.otherMessageText,
+                ]}
+              >
+                {item.text.includes("Replying to:")
+                  ? item.text.split("\n\n")[1]
+                  : item.text}
+              </Text>
+              <Text
+                style={[
+                  styles.messageTime,
+                  myMessage ? styles.myMessageTime : styles.otherMessageTime,
+                ]}
+              >
+                {dayjs(item.createdAt).format("h:mm A")}
+              </Text>
+            </View>
+          </Swipeable>
         </>
       );
     }
@@ -330,56 +420,6 @@ const ChatRoom = () => {
       const myMessage = isMyMessage(item);
       const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
       swipeableRefs.current[item.id] = swipeableRef;
-      const renderLeftActions = (progress, dragX) => {
-        const trans = dragX.interpolate({
-          inputRange: [0, 50, 100, 101],
-          outputRange: [-20, 0, 0, 1],
-        });
-
-        const opacity = progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 1],
-        });
-
-        const scale = progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.8, 1],
-        });
-
-        return (
-          <RectButton
-            style={styles.leftAction}
-            onPress={() => [swipeableRef.current.close(), console.log("close")]}
-          >
-            <Animated.View
-              style={[
-                styles.replyImageWrapper,
-                {
-                  width: widthPercentageToDP(20),
-                  height: "100%",
-                  justifyContent: "center",
-                  // opacity,
-                  // transform: [{ scale }],
-                },
-                myMessage && { alignItems: "flex-end" },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="reply-circle"
-                size={26}
-                color={Colors.dark.backgroundGrayText}
-              />
-            </Animated.View>
-          </RectButton>
-        );
-      };
-
-      const onSwipeableWillOpen = (item) => {
-        const originalText = item.text.includes("Replying to:")
-          ? item.text.split("\n\n")[1]
-          : item.text;
-        setReplyingText(originalText);
-      };
 
       const handleDelete = (id) => {
         setMessages((prevMessages) =>
@@ -403,48 +443,32 @@ const ChatRoom = () => {
             </MenuOptions>
 
             <MenuTrigger> */}
-          <Swipeable
-            ref={swipeableRef}
-            renderLeftActions={renderLeftActions}
-            onSwipeableWillOpen={() => [
-              swipeableRef.current.close(),
-              onSwipeableWillOpen(item),
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
-              textInputRef.current.focus(),
+
+          <View
+            style={[
+              styles.messageContainer,
+              item.type === "voice" && { width: "100%" },
+              myMessage
+                ? [
+                    styles.myMessage,
+                    {
+                      borderTopEndRadius: 20,
+                      borderTopStartRadius: 20,
+                      borderBottomLeftRadius: 20,
+                    },
+                  ]
+                : [
+                    styles.otherMessage,
+                    {
+                      borderTopEndRadius: 20,
+                      borderTopStartRadius: 20,
+                      borderBottomRightRadius: 20,
+                    },
+                  ],
             ]}
-            overshootLeft={false}
-            overshootRight={false}
-            leftThreshold={70}
-            friction={2}
-            containerStyle={{ paddingHorizontal: 10 }}
           >
-            <View
-              style={[
-                styles.messageContainer,
-                item.type === "voice" && { width: "100%" },
-                myMessage
-                  ? [
-                      styles.myMessage,
-                      {
-                        borderTopEndRadius: 20,
-                        borderTopStartRadius: 20,
-                        borderBottomLeftRadius: 20,
-                      },
-                    ]
-                  : [
-                      styles.otherMessage,
-                      {
-                        borderTopEndRadius: 20,
-                        borderTopStartRadius: 20,
-                        borderBottomRightRadius: 20,
-                      },
-                    ],
-              ]}
-            >
-              <View></View>
-              <MessageItemRender item={item} />
-            </View>
-          </Swipeable>
+            <MessageItemRender item={item} />
+          </View>
           {/* </MenuTrigger>
           </Menu> */}
         </>
@@ -801,16 +825,18 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     marginVertical: 5,
-    maxWidth: "80%",
+    overflow: "visible",
+
     // marginRight: 20,
   },
   myMessage: {
-    backgroundColor: Colors.light.primary,
     alignSelf: "flex-end",
+    marginLeft: "20%",
+    overflow: "visible",
   },
   otherMessage: {
-    backgroundColor: Colors.light.background,
     alignSelf: "flex-start",
+    marginRight: "20%",
   },
   messageText: {
     fontSize: 16,
