@@ -1,9 +1,59 @@
 [
   {
+    "id": "m5",
+    "type": "text",
+    "text": "How is your uni going?",
+    "createdAt": "2024-08-05T14:51:00.000Z",
+    "user": {
+      "id": "u1",
+      "name": "Vadim"
+    }
+  },
+  {
     "id": "m1",
     "type": "text",
-    "text": "How are you, Lukas!",
-    "createdAt": "2022-10-10T12:48:00.000Z",
+    "text": "How are yo, Lukas!",
+    "createdAt": "2024-08-04T12:48:00.000Z",
+    "user": {
+      "id": "u1",
+      "name": "Vadim"
+    }
+  },
+  {
+    "id": "m10",
+    "type": "text",
+    "text": "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
+    "createdAt": "2024-08-03T14:53:00.000Z",
+    "user": {
+      "id": "u2",
+      "name": "Lukas"
+    }
+  },
+  {
+    "id": "m13",
+    "type": "text",
+    "text": "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
+    "createdAt": "2024-07-30T14:53:00.000Z",
+    "user": {
+      "id": "u1",
+      "name": "Vadim"
+    }
+  },
+  {
+    "id": "m9",
+    "type": "text",
+    "text": "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book",
+    "createdAt": "2024-07-30T14:53:00.000Z",
+    "user": {
+      "id": "u2",
+      "name": "Lukas"
+    }
+  },
+  {
+    "id": "m8",
+    "type": "text",
+    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    "createdAt": "2024-07-30T14:53:00.000Z",
     "user": {
       "id": "u1",
       "name": "Vadim"
@@ -13,7 +63,27 @@
     "id": "m2",
     "type": "text",
     "text": "I am good, good",
-    "createdAt": "2022-10-03T14:49:00.000Z",
+    "createdAt": "2024-07-20T14:49:00.000Z",
+    "user": {
+      "id": "u2",
+      "name": "Lukas"
+    }
+  },
+  {
+    "id": "m12",
+    "type": "text",
+    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    "createdAt": "2024-06-20T14:53:00.000Z",
+    "user": {
+      "id": "u1",
+      "name": "Vadim"
+    }
+  },
+  {
+    "id": "m11",
+    "type": "text",
+    "text": "Ok.",
+    "createdAt": "2024-05-06T14:53:00.000Z",
     "user": {
       "id": "u2",
       "name": "Lukas"
@@ -23,7 +93,27 @@
     "id": "m3",
     "type": "text",
     "text": "What about you?",
-    "createdAt": "2022-10-03T14:49:40.000Z",
+    "createdAt": "2024-05-03T14:49:40.000Z",
+    "user": {
+      "id": "u2",
+      "name": "Lukas"
+    }
+  },
+  {
+    "id": "m7",
+    "type": "text",
+    "text": "Big Data is really interesting. Cannot wait to go through all the material.",
+    "createdAt": "2024-04-30T14:53:00.000Z",
+    "user": {
+      "id": "u1",
+      "name": "Vadim"
+    }
+  },
+  {
+    "id": "m6",
+    "type": "text",
+    "text": "It is a bit tough, as I have 2 specializations. How about yours? Do you enjoy it?",
+    "createdAt": "2024-01-03T14:49:00.000Z",
     "user": {
       "id": "u2",
       "name": "Lukas"
@@ -34,96 +124,6 @@
     "type": "text",
     "text": "Good as well, preparing for the stream now.",
     "createdAt": "2022-10-03T14:50:00.000Z",
-    "user": {
-      "id": "u1",
-      "name": "Vadim"
-    }
-  },
-  {
-    "id": "m5",
-    "type": "text",
-    "text": "How is your uni going?",
-    "createdAt": "2022-10-03T14:51:00.000Z",
-    "user": {
-      "id": "u1",
-      "name": "Vadim"
-    }
-  },
-  {
-    "id": "m6",
-    "type": "text",
-    "text": "It is a bit tough, as I have 2 specializations. How about yours? Do you enjoy it?",
-    "createdAt": "2022-10-03T14:49:00.000Z",
-    "user": {
-      "id": "u2",
-      "name": "Lukas"
-    }
-  },
-  {
-    "id": "m7",
-    "type": "text",
-    "text": "Big Data is really interesting. Cannot wait to go through all the material.",
-    "createdAt": "2022-10-03T14:53:00.000Z",
-    "user": {
-      "id": "u1",
-      "name": "Vadim"
-    }
-  },
-  {
-    "id": "m8",
-    "type": "text",
-    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    "createdAt": "2022-10-03T14:53:00.000Z",
-    "user": {
-      "id": "u1",
-      "name": "Vadim"
-    }
-  },
-  {
-    "id": "m9",
-    "type": "text",
-    "text": "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book",
-    "createdAt": "2022-10-03T14:53:00.000Z",
-    "user": {
-      "id": "u2",
-      "name": "Lukas"
-    }
-  },
-  {
-    "id": "m10",
-    "type": "text",
-    "text": "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
-    "createdAt": "2022-10-03T14:53:00.000Z",
-    "user": {
-      "id": "u2",
-      "name": "Lukas"
-    }
-  },
-  {
-    "id": "m11",
-    "type": "text",
-    "text": "Ok.",
-    "createdAt": "2022-10-03T14:53:00.000Z",
-    "user": {
-      "id": "u2",
-      "name": "Lukas"
-    }
-  },
-  {
-    "id": "m12",
-    "type": "text",
-    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    "createdAt": "2022-10-03T14:53:00.000Z",
-    "user": {
-      "id": "u1",
-      "name": "Vadim"
-    }
-  },
-  {
-    "id": "m13",
-    "type": "text",
-    "text": "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
-    "createdAt": "2022-10-03T14:53:00.000Z",
     "user": {
       "id": "u1",
       "name": "Vadim"

@@ -155,7 +155,7 @@ const MemoListItem = ({ memo }) => {
           style={{
             position: "absolute",
             left: 0,
-            bottom: 0,
+            bottom: 5,
             color: "gray",
             fontFamily: "Inter",
             fontSize: 12,
@@ -167,7 +167,7 @@ const MemoListItem = ({ memo }) => {
           style={{
             position: "absolute",
             right: 0,
-            bottom: 0,
+            bottom: 5,
             color: "gray",
             fontFamily: "Inter",
             fontSize: 12,
@@ -187,7 +187,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
-    paddingVertical: 5,
     borderRadius: 10,
     gap: 15,
 

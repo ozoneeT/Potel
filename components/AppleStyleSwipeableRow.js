@@ -1,9 +1,11 @@
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { Animated, StyleSheet, Text, View, I18nManager } from "react-native";
 import { RectButton } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Color";
+
+const openRowRef = { current: null }; // Shared ref for tracking the open row
 
 const AppleStyleSwipeableRow = ({ children }) => {
   const swipeableRow = useRef(null);
@@ -16,8 +18,6 @@ const AppleStyleSwipeableRow = ({ children }) => {
 
     const pressHandler = () => {
       swipeableRow.current?.close();
-      // eslint-disable-next-line no-alert
-      window.alert(text);
     };
 
     return (
@@ -50,6 +50,15 @@ const AppleStyleSwipeableRow = ({ children }) => {
     </View>
   );
 
+  const onSwipeableWillOpen = useCallback(() => {
+    openRowRef.current = swipeableRow.current;
+  }, []);
+  const closeRow = useCallback(() => {
+    if (openRowRef.current && openRowRef.current !== swipeableRow.current) {
+      openRowRef.current.close();
+    }
+  }, []);
+
   return (
     <Swipeable
       ref={swipeableRow}
@@ -57,12 +66,9 @@ const AppleStyleSwipeableRow = ({ children }) => {
       enableTrackpadTwoFingerGesture
       rightThreshold={40}
       renderRightActions={renderRightActions}
-      // onSwipeableOpen={(direction) => {
-      //   console.log(`Opening swipeable from the ${direction}`);
-      // }}
-      // onSwipeableClose={(direction) => {
-      //   console.log(`Closing swipeable to the ${direction}`);
-      // }}
+      onSwipeableWillOpen={onSwipeableWillOpen}
+      onSwipeableOpenStartDrag={closeRow}
+      overshootRight={false}
     >
       {children}
     </Swipeable>
