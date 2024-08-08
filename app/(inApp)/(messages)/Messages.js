@@ -30,7 +30,7 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { X } from "lucide-react-native";
+import { X, Mic, Undo } from "lucide-react-native";
 import dayjs from "dayjs";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -84,41 +84,7 @@ const ChatRoom = () => {
   const [isSending, setIsSending] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const lottieRef = useRef(null);
-
-  const handleDelete = (id) => {
-    setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
-  };
-  const currentDate = new Date();
-
-  const handleSendMessage = useCallback(() => {
-    const newMessage = newMessageRef.current.trim();
-    if (newMessage) {
-      setIsSending(true);
-      setTyping(false);
-
-      let messageToSend = newMessage;
-
-      if (replyingText) {
-        messageToSend = `Replying to: ${replyingText}\n\n${messageToSend}`;
-        setReplyingText("");
-      }
-
-      const newMsg = {
-        id: messages.length + 1,
-        text: messageToSend,
-        type: "text",
-        createdAt: new Date().toISOString(),
-        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
-      };
-
-      setMessages((prevMessages) => [newMsg, ...prevMessages]);
-      newMessageRef.current = ""; // Clear the ref value
-      textInputRef.current.clear(); // Clear the input field
-      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
-
-      setIsSending(false);
-    }
-  }, [messages, replyingText]);
+  const [replyingMessageId, setReplyingMessageId] = useState(null);
 
   async function StartRecording() {
     console.log("start Recording");
@@ -161,20 +127,39 @@ const ChatRoom = () => {
 
     try {
       setIsRecording(false);
-      console.log("Stopping recording..");
       const recording = recordingRef.current;
-      recordingRef.current = null;
+
+      // Fetch the status and get the duration before stopping
+      const status = await recording.getStatusAsync();
+
+      const durationMillis = status.durationMillis;
+
+      // Convert durationMillis to minutes and seconds
+      const minutes = Math.floor(durationMillis / 60000);
+      const seconds = Math.floor((durationMillis % 60000) / 1000);
+
+      // Format the duration as "0:00"
+      const formattedDuration = `${minutes}:${seconds
+        .toString()
+        .padStart(2, "0")}`;
+
+      // Proceed to stop and unload the recording
       await recording.stopAndUnloadAsync();
+
+      // Reset audio mode after stopping the recording
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
       });
+
       const uri = recording.getURI();
       if (uri) {
+        // Use the durationMillis obtained before stopping
         const newVoiceMessage = {
           id: messages.length + 1,
           metering: audioMeteringRef.current,
           type: "voice",
           text: "Voice",
+          duration: formattedDuration,
           uri: uri,
           createdAt: new Date().toISOString(),
           user: { id: "u1", name: "User" }, // assuming "u1" is the current user
@@ -185,8 +170,15 @@ const ChatRoom = () => {
       }
     } catch (err) {
       console.error("Failed to stop recording", err);
+    } finally {
+      recordingRef.current = null; // Reset the recording reference
     }
   }
+
+  const handleDelete = (id) => {
+    setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
+  };
+  const currentDate = new Date();
 
   const longPress = Gesture.LongPress()
     .onStart(StartRecording)
@@ -251,192 +243,314 @@ const ChatRoom = () => {
     return message.user.id === "u1"; // assuming "u1" is the current user
   }, []);
 
+  const handleSendMessage = useCallback(() => {
+    const newMessage = newMessageRef.current.trim();
+    if (newMessage) {
+      setIsSending(true);
+      setTyping(false);
+
+      // Functional update to ensure we're working with the latest state
+      setMessages((prevMessages) => {
+        const newMsg = {
+          id: prevMessages.length + 1,
+          text: newMessage,
+          type: "text",
+          createdAt: new Date().toISOString(),
+          user: { id: "u1", name: "User" },
+          replyTo: replyingMessageId || null,
+        };
+
+        return [newMsg, ...prevMessages];
+      });
+
+      newMessageRef.current = ""; // Clear the ref value
+      textInputRef.current.clear(); // Clear the input field
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+
+      setReplyingMessageId(null); // Clear the replying message ID
+      setIsSending(false);
+    }
+  }, [replyingMessageId, messages]);
+
   const MessageItemRender = ({ item }) => {
     const myMessage = isMyMessage(item);
-    const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
-    swipeableRefs.current[item.id] = swipeableRef;
 
-    if (item.type === "text") {
-      return (
-        <>
-          <View
-            style={[
-              myMessage
-                ? [
-                    {
-                      borderTopEndRadius: 20,
-                      borderTopStartRadius: 20,
-                      borderBottomLeftRadius: 20,
-                      backgroundColor: Colors.dark.primary,
-                    },
-                  ]
-                : [
-                    {
-                      borderTopEndRadius: 20,
-                      borderTopStartRadius: 20,
-                      borderBottomRightRadius: 20,
-                      backgroundColor: "#ffffff",
-                    },
-                  ],
-            ]}
-          >
-            {item.text.includes("Replying to:") && (
-              <View style={styles.replyingInMessage}>
-                <Text style={{ paddingVertical: 5, fontWeight: "bold" }}>
-                  You
+    const renderReplyingMessage = (item) => {
+      if (item.replyTo) {
+        const repliedMessage = messages.find((msg) => msg.id === item.replyTo);
+        if (repliedMessage && repliedMessage.type === "text") {
+          return (
+            <View style={{ alignItems: "flex-end", opacity: 0.5 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Undo size={20} />
+                <Text
+                  style={{ fontSize: 12, marginVertical: 5, marginLeft: 5 }}
+                >
+                  You replied to {repliedMessage.user.name}
                 </Text>
+              </View>
+              <View style={styles.replyingInMessage}>
                 <Text
                   style={styles.replyingInMessageText}
                   ellipsizeMode="tail"
                   numberOfLines={3}
                 >
-                  {item.text.split("\n\n")[0]}
+                  {repliedMessage.text}
                 </Text>
               </View>
-            )}
-            <Text
+            </View>
+          );
+        }
+        if (repliedMessage && repliedMessage.type === "voice") {
+          return (
+            <View style={{ alignItems: "flex-end", opacity: 0.5 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Undo size={20} />
+                <Text
+                  style={{ fontSize: 12, marginVertical: 5, marginLeft: 5 }}
+                >
+                  You replied to {repliedMessage.user.name}
+                </Text>
+              </View>
+              <View style={[styles.replyingInMessage]}>
+                <Mic />
+                <Text
+                  style={styles.replyingInMessageText}
+                  ellipsizeMode="tail"
+                  numberOfLines={3}
+                >
+                  {repliedMessage.duration}
+                </Text>
+              </View>
+            </View>
+          );
+        }
+      }
+      return null;
+    };
+
+    const renderMainMessage = (item) => {
+      if (item.type === "text") {
+        return (
+          <>
+            <View
               style={[
-                styles.messageText,
-                myMessage ? styles.myMessageText : styles.otherMessageText,
+                myMessage
+                  ? [
+                      {
+                        borderTopEndRadius: 20,
+                        borderTopStartRadius: 20,
+                        borderBottomLeftRadius: 20,
+                        backgroundColor: Colors.dark.primary,
+                      },
+                    ]
+                  : [
+                      {
+                        borderTopEndRadius: 20,
+                        borderTopStartRadius: 20,
+                        borderBottomRightRadius: 20,
+                        backgroundColor: "#ffffff",
+                      },
+                    ],
+                styles.mesageContain,
               ]}
             >
-              {item.text.includes("Replying to:")
-                ? item.text.split("\n\n")[1]
-                : item.text}
-            </Text>
+              <Text
+                style={[
+                  styles.messageText,
+                  myMessage ? styles.myMessageText : styles.otherMessageText,
+                ]}
+              >
+                {item.text}
+              </Text>
+              <Text
+                style={[
+                  styles.messageTime,
+                  myMessage ? styles.myMessageTime : styles.otherMessageTime,
+                ]}
+              >
+                {dayjs(item.createdAt).format("h:mm A")}
+              </Text>
+            </View>
+          </>
+        );
+      }
+
+      if (item.type === "voice") {
+        return (
+          <View>
+            <MemoListItem memo={item} />
+          </View>
+        );
+      }
+
+      if (item.type === "image") {
+        return (
+          <View style={{ padding: 5 }}>
+            <Image
+              source={{ uri: item.uri }}
+              resizeMode="cover"
+              style={{ borderRadius: 15, width: "100%" }}
+              aspectRatio={1}
+            />
+
             <Text
               style={[
                 styles.messageTime,
+                { marginTop: 10 },
                 myMessage ? styles.myMessageTime : styles.otherMessageTime,
               ]}
             >
               {dayjs(item.createdAt).format("h:mm A")}
             </Text>
           </View>
-        </>
-      );
-    }
+        );
+      }
+    };
 
-    if (item.type === "voice") {
-      return (
-        <View>
-          <MemoListItem memo={item} />
-        </View>
-      );
-    }
-
-    if (item.type === "image") {
-      return (
-        <View style={{ padding: 5 }}>
-          <Image
-            source={{ uri: item.uri }}
-            resizeMode="cover"
-            style={{ borderRadius: 15, width: "100%" }}
-            aspectRatio={1}
-          />
-          <Text
-            style={[
-              styles.messageTime,
-              { marginTop: 10 },
-              myMessage ? styles.myMessageTime : styles.otherMessageTime,
-            ]}
-          >
-            {dayjs(item.createdAt).format("h:mm A")}
-          </Text>
-        </View>
-      );
-    }
+    return (
+      <>
+        {renderReplyingMessage(item)}
+        {renderMainMessage(item)}
+      </>
+    );
   };
-  const renderMessageItem = useCallback(
-    ({ item }) => {
-      const myMessage = isMyMessage(item);
-      const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
-      swipeableRefs.current[item.id] = swipeableRef;
 
-      const renderLeftActions = (progress, dragX) => {
-        const scale = progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.5, 1],
-          extrapolate: "clamp",
-        });
+  const renderMessageItem = ({ item }) => {
+    const myMessage = isMyMessage(item);
+    const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
+    swipeableRefs.current[item.id] = swipeableRef;
 
-        return (
-          <RectButton style={styles.leftAction}>
-            <Animated.View
-              style={[
-                styles.replyImageWrapper,
-                {
-                  width: widthPercentageToDP(20),
-                  height: "100%",
-                  justifyContent: "center",
-                  transform: [{ scale }],
-                },
-                myMessage && { alignItems: "flex-end", right: "80%" },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="reply-circle"
-                size={40}
-                color={Colors.dark.backgroundGrayText}
-              />
-            </Animated.View>
-          </RectButton>
-        );
-      };
-
-      const handleDelete = (id) => {
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg.id !== id)
-        );
-      };
-
-      const onSwipeableWillOpen = (item) => {
-        const originalText = item.text.includes("Replying to:")
-          ? item.text.split("\n\n")[1]
-          : item.text;
-        setReplyingText(originalText);
-      };
+    const renderLeftActions = (progress, dragX) => {
+      const scale = progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.5, 1],
+        extrapolate: "clamp",
+      });
 
       return (
-        <>
-          <View
+        <RectButton style={styles.leftAction}>
+          <Animated.View
             style={[
-              styles.messageContainer,
-              item.type === "voice" && { width: "80%" },
-              myMessage ? [styles.myMessage] : [styles.otherMessage],
+              styles.replyImageWrapper,
+              {
+                width: widthPercentageToDP(20),
+                height: "100%",
+                justifyContent: "center",
+                transform: [{ scale }],
+              },
             ]}
           >
-            <Swipeable
-              ref={swipeableRef}
-              renderLeftActions={renderLeftActions}
-              onSwipeableWillOpen={() => [
-                swipeableRef.current.close(),
-                onSwipeableWillOpen(item),
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
-                textInputRef.current.focus(),
-              ]}
-              overshootLeft={false}
-              overshootRight={false}
-              leftThreshold={70}
-              friction={2}
-              containerStyle={[
-                !myMessage && {
-                  marginLeft: 10,
-                },
-                myMessage && {
-                  marginRight: 10,
-                },
-                { overflow: "visible" },
-              ]}
-            >
-              <MessageItemRender item={item} />
-            </Swipeable>
-          </View>
-        </>
+            <MaterialCommunityIcons
+              name="reply-circle"
+              size={40}
+              color={Colors.dark.backgroundGrayText}
+            />
+          </Animated.View>
+        </RectButton>
       );
-    },
-    [isMyMessage]
-  );
+    };
+    const renderRightActions = (progress, dragX) => {
+      const scale = progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.5, 1],
+        extrapolate: "clamp",
+      });
+
+      return (
+        <RectButton style={styles.leftAction}>
+          <Animated.View
+            style={[
+              styles.replyImageWrapper,
+              {
+                width: widthPercentageToDP(20),
+                height: "100%",
+                justifyContent: "center",
+                transform: [{ scale }],
+              },
+              myMessage && { alignItems: "flex-end", left: "15%" },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="reply-circle"
+              size={40}
+              color={Colors.dark.backgroundGrayText}
+            />
+          </Animated.View>
+        </RectButton>
+      );
+    };
+
+    const handleDelete = (id) => {
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== id)
+      );
+    };
+
+    const onSwipeableWillOpen = (item) => {
+      setReplyingMessageId(item.id);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      textInputRef.current.focus();
+    };
+
+    return (
+      <>
+        <Pressable
+          onPress={() => {
+            const messageIndex = messages.findIndex(
+              (msg) => msg.id === item.replyTo
+            );
+
+            console.log("this is the log for item.replyTo", item.replyTo);
+            console.log("this is message index", messageIndex);
+            console.log("this is messages.length", messages.length);
+
+            if (messageIndex >= 0 && messageIndex < messages.length) {
+              flatListRef.current?.scrollToIndex({
+                index: messageIndex,
+                animated: true,
+                viewPosition: 0.5, // Center the item in the view
+              });
+            } else {
+              console.log("Message not found or index out of bounds!");
+            }
+          }}
+          style={[
+            styles.messageContainer,
+            item.type === "voice" && { width: "80%" },
+            myMessage ? [styles.myMessage] : [styles.otherMessage],
+          ]}
+        >
+          <Swipeable
+            ref={swipeableRef}
+            {...(myMessage ? { renderRightActions } : { renderLeftActions })}
+            onSwipeableWillOpen={() => [
+              swipeableRef.current.close(),
+              onSwipeableWillOpen(item),
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+              textInputRef.current.focus(),
+            ]}
+            overshootLeft={false}
+            overshootRight={false}
+            leftThreshold={70}
+            friction={2}
+            containerStyle={[
+              !myMessage && {
+                marginLeft: 10,
+              },
+              myMessage && {
+                marginRight: 10,
+              },
+              { overflow: "visible" },
+            ]}
+          >
+            <MessageItemRender item={item} />
+          </Swipeable>
+        </Pressable>
+      </>
+    );
+  };
+
   const groupedMessages = groupMessagesByDate(messages);
   const groupedMessagesArray = Object.keys(groupedMessages).map((date) => ({
     date,
@@ -589,7 +703,7 @@ const ChatRoom = () => {
       <ImageBackground source={bg} style={styles.backgroundImage}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 90}
           style={styles.container}
         >
           <FlashList
@@ -650,12 +764,17 @@ const ChatRoom = () => {
             </View>
           )}
 
-          {replyingText && (
+          {replyingMessageId && (
             <Animated.View style={styles.replyingContainer}>
               <View style={styles.replyingContent}>
                 <View style={styles.replyingUser}>
                   <Text>
-                    Replying to <Text style={{ fontWeight: "bold" }}>You</Text>
+                    <Text style={{ fontWeight: "bold" }}>
+                      {
+                        messages.find((msg) => msg.id === replyingMessageId)
+                          ?.user.name
+                      }
+                    </Text>
                   </Text>
                 </View>
                 <Text
@@ -663,18 +782,17 @@ const ChatRoom = () => {
                   numberOfLines={1}
                   style={styles.replyingText}
                 >
-                  {replyingText}
+                  {messages.find((msg) => msg.id === replyingMessageId)?.text}
                 </Text>
               </View>
               <Pressable
                 style={styles.replyingDismis}
-                onPress={() => setReplyingText()}
+                onPress={() => setReplyingMessageId(null)}
               >
                 <X color={"gray"} size={20} />
               </Pressable>
             </Animated.View>
           )}
-
           <View style={[styles.inputContainer]}>
             <TouchableOpacity style={{ padding: 5 }} onPress={handleOpenPress}>
               <Ionicons name="attach" size={24} color="black" />
@@ -774,12 +892,12 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    padding: 10,
+    padding: hp(1),
     borderColor: Colors.light.border,
     borderWidth: 1,
     borderRadius: 20,
     marginRight: 10,
-    minHeight: 20, // Adjust based on line height
+    minHeight: hp(2), // Adjust based on line height
     maxHeight: 80,
   },
   sendButton: {
@@ -797,10 +915,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   messageContainer: {
-    marginVertical: 5,
     overflow: "visible",
+    maxWidth: "70%",
 
     // marginRight: 20,
+  },
+  mesageContain: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    marginVertical: 5,
+    alignSelf: "flex-end",
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -814,6 +939,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     padding: 10,
+    flexShrink: 1,
   },
   myMessageText: {
     color: Colors.light.text,
@@ -826,6 +952,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     paddingHorizontal: 10,
     paddingBottom: 5,
+    marginLeft: "auto",
   },
   myMessageTime: {
     color: Colors.light.subText,
@@ -875,15 +1002,16 @@ const styles = StyleSheet.create({
   },
   replyingText: { fontSize: 13, marginRight: 10, color: "gray" },
   replyingInMessage: {
-    fontSize: 13,
     padding: 10,
-    backgroundColor: "#ffd836",
+    backgroundColor: "#e8e8e8",
+
     borderRadius: 10,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    borderRadius: 20,
-    margin: 5,
+    alignSelf: "flex-end", // Adjust this to flex-start
+    marginBottom: -30,
+
+    flexDirection: "row",
+    paddingBottom: 30,
+    alignItems: "center",
   },
   replyingInMessageText: { fontSize: 13 },
   replyingUser: { marginVertical: 5 },

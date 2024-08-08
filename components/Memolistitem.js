@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -17,11 +17,13 @@ import { Colors } from "@/constants/Colors";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { heightPercentageToDP } from "react-native-responsive-screen";
+import Slider from "@react-native-community/slider";
 dayjs.extend(relativeTime);
 
 const MemoListItem = ({ memo }) => {
   const [sound, setSound] = useState(null);
   const [status, setStatus] = useState(null);
+  const soundRef = useRef(null);
 
   const loadSound = useCallback(async () => {
     try {
@@ -31,56 +33,55 @@ const MemoListItem = ({ memo }) => {
         onPlaybackStatusUpdate
       );
       setSound(newSound);
+      soundRef.current = newSound;
     } catch (error) {
       console.error("Error loading sound:", error);
     }
   }, [memo.uri]);
 
   const onPlaybackStatusUpdate = useCallback(
-    async (newStatus) => {
+    (newStatus) => {
       setStatus(newStatus);
 
-      if (!newStatus.isLoaded || !sound) {
+      if (!newStatus.isLoaded || !soundRef.current) {
         return;
       }
 
       if (newStatus.didJustFinish) {
-        await sound.setPositionAsync(0);
+        soundRef.current.setPositionAsync(0);
         setStatus({ ...newStatus, isPlaying: false });
       }
     },
-    [sound]
+    [soundRef]
   );
 
   useEffect(() => {
     loadSound();
 
     return () => {
-      if (sound) {
-        sound.unloadAsync();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
       }
     };
-  }, [loadSound, memo]);
+  }, [loadSound]);
 
   const playSound = async () => {
-    if (!sound) {
-      return;
-    }
+    if (!soundRef.current) return;
 
-    if (status?.isLoaded && status.isPlaying) {
-      await sound.pauseAsync();
-    } else {
-      await sound.replayAsync();
+    if (status?.isLoaded) {
+      if (status.isPlaying) {
+        await soundRef.current.pauseAsync();
+      } else {
+        await soundRef.current.playAsync();
+      }
     }
   };
 
-  useEffect(() => {
-    return sound
-      ? () => {
-          sound.unloadAsync();
-        }
-      : undefined;
-  }, [sound]);
+  const seek = async (value) => {
+    if (soundRef.current) {
+      await soundRef.current.setPositionAsync(value);
+    }
+  };
 
   const formatMillis = (millis) => {
     const minutes = Math.floor(millis / (1000 * 60));
@@ -116,7 +117,6 @@ const MemoListItem = ({ memo }) => {
     <View style={styles.container}>
       <TouchableOpacity onPress={playSound} style={{ padding: 5 }}>
         <FontAwesome5
-          onPress={playSound}
           name={isPlaying ? "pause" : "play"}
           size={20}
           color={"gray"}
@@ -133,7 +133,7 @@ const MemoListItem = ({ memo }) => {
                 {
                   height: interpolate(
                     db,
-                    [heightPercentageToDP(Platform.OS === "ios" ? -4 : -30), 0],
+                    [heightPercentageToDP(Platform.OS === "ios" ? -6 : -30), 0],
                     [5, 50],
                     Extrapolate.CLAMP
                   ),
@@ -150,6 +150,16 @@ const MemoListItem = ({ memo }) => {
             />
           ))}
         </View>
+        <Slider
+          value={position}
+          maximumValue={duration}
+          onSlidingComplete={seek}
+          style={{ height: 40, width: "100%" }}
+          minimumValue={0}
+          maximumTrackTintColor="#00000000"
+          minimumTrackTintColor="#1fb28b00"
+          thumbTintColor="#b9e4c9"
+        />
 
         <Text
           style={{
@@ -179,7 +189,6 @@ const MemoListItem = ({ memo }) => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
@@ -223,11 +232,11 @@ const styles = StyleSheet.create({
   wave: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
+    gap: 2,
+    position: "absolute",
   },
   waveLine: {
     flex: 1,
-    height: 30,
     backgroundColor: "gainsboro",
     borderRadius: 20,
     borderWidth: 1,

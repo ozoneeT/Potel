@@ -16,7 +16,7 @@
     "app/(inApp)/(drawer)/(tabs)/_layout.js",
     "app/(inApp)/(taskform)/Goal.tsxxx",
     "app/(inApp)/(taskform)/Reminder.js",
-    "app/(inApp)/(drawer)/(messages)/Messages.js",
+    "app/(inApp)/(messages)/Messages.js",
     "app/(inApp)/(drawer)/(tabs)/Voicenote.js",
     "components/AppleStyleSwipeableRow.js",
     "components/AppleStyleSwipeableRow.js"

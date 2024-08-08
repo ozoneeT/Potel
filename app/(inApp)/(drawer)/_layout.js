@@ -6,7 +6,7 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         screenOptions={{
-          swipeEdgeWidth: 400,
+          swipeEdgeWidth: 100,
         }}
       >
         <Drawer.Screen name="(tabs)" options={{ headerShown: false }} />

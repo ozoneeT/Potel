@@ -15,6 +15,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@alirehman7141/react-native-audiowaveform": "^2.0.6",
     "@expo/vector-icons": "^14.0.2",
     "@firebase/firestore": "^4.6.3",
     "@gorhom/bottom-sheet": "^4",
@@ -22,6 +23,7 @@
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
     "@react-native-community/netinfo": "11.3.1",
+    "@react-native-community/slider": "^4.5.2",
     "@react-native-menu/menu": "^1.1.2",
     "@react-native-picker/picker": "2.7.5",
     "@react-native-segmented-control/segmented-control": "^2.5.2",
@@ -32,7 +34,8 @@
     "@react-navigation/stack": "^6.4.1",
     "@reduxjs/toolkit": "^2.2.5",
     "@shopify/flash-list": "^1.6.4",
-    "@shopify/react-native-skia": "1.2.3",
+    "@shopify/react-native-skia": "^1.2.3",
+    "@simform_solutions/react-native-audio-waveform": "^2.0.0",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^3.6.0",
@@ -64,6 +67,7 @@
     "react-dom": "18.2.0",
     "react-native": "0.74.3",
     "react-native-actions-sheet": "^0.9.3",
+    "react-native-awesome-slider": "^2.5.3",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-gifted-chat": "^2.4.0",
     "react-native-image-viewing": "^0.2.2",
