@@ -1,6 +1,6 @@
 [
   {
-    "id": "m5",
+    "id": "1",
     "type": "text",
     "text": "How is your uni going?",
     "createdAt": "2024-08-05T14:51:00.000Z",
@@ -8,10 +8,10 @@
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m1",
+    "id": "2",
     "type": "text",
     "text": "How are yo, Lukas!",
     "createdAt": "2024-08-04T12:48:00.000Z",
@@ -19,54 +19,54 @@
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m10",
+    "id": "3",
     "type": "text",
-    "text": "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
+    "text": "but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
     "createdAt": "2024-08-03T14:53:00.000Z",
     "user": {
       "id": "u2",
       "name": "Lukas"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m13",
+    "id": "4",
     "type": "text",
-    "text": "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in",
+    "text": "It has survived not only five centuries, sldoakdghosodiakljkcnokalkjdogieklslallss,remaining essentially unchanged. It was popularised in",
     "createdAt": "2024-07-30T14:53:00.000Z",
     "user": {
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m9",
+    "id": "5",
     "type": "text",
-    "text": "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book",
+    "text": "Okay na sodilsdaodijklgjlsjdaosidjlkejknocoiaslkdjlkgos, when an unknown printer took a galley of type and scrambled it to make a type specimen book",
     "createdAt": "2024-07-30T14:53:00.000Z",
     "user": {
       "id": "u2",
       "name": "Lukas"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m8",
+    "id": "6",
     "type": "text",
-    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    "text": "It is well sha fosdkalsjdkldsjogioiekljsajsidojlkjlg slaksodikg",
     "createdAt": "2024-07-30T14:53:00.000Z",
     "user": {
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m2",
+    "id": "7",
     "type": "text",
     "text": "I am good, good",
     "createdAt": "2024-07-20T14:49:00.000Z",
@@ -74,21 +74,21 @@
       "id": "u2",
       "name": "Lukas"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m12",
+    "id": "8",
     "type": "text",
-    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    "text": "Forget how e take happen am a text of the printing and typesetting industry.",
     "createdAt": "2024-06-20T14:53:00.000Z",
     "user": {
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m11",
+    "id": "9",
     "type": "text",
     "text": "Ok.",
     "createdAt": "2024-05-06T14:53:00.000Z",
@@ -96,21 +96,21 @@
       "id": "u2",
       "name": "Lukas"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m3",
+    "id": "10",
     "type": "text",
-    "text": "What about you?",
+    "text": "it is well sha?",
     "createdAt": "2024-05-03T14:49:40.000Z",
     "user": {
       "id": "u2",
       "name": "Lukas"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m7",
+    "id": "11",
     "type": "text",
     "text": "Big Data is really interesting. Cannot wait to go through all the material.",
     "createdAt": "2024-04-30T14:53:00.000Z",
@@ -118,10 +118,10 @@
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m6",
+    "id": "12",
     "type": "text",
     "text": "It is a bit tough, as I have 2 specializations. How about yours? Do you enjoy it?",
     "createdAt": "2024-01-03T14:49:00.000Z",
@@ -129,10 +129,10 @@
       "id": "u2",
       "name": "Lukas"
     },
-    "replyTo": null
+    "repliedTo": null
   },
   {
-    "id": "m4",
+    "id": "13",
     "type": "text",
     "text": "Good as well, preparing for the stream now.",
     "createdAt": "2022-10-03T14:50:00.000Z",
@@ -140,6 +140,6 @@
       "id": "u1",
       "name": "Vadim"
     },
-    "replyTo": null
+    "repliedTo": null
   }
 ]

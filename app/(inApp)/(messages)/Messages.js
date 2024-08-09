@@ -23,6 +23,7 @@ import {
   ScrollView,
   Button,
   Animated,
+  Dimensions,
 } from "react-native";
 import {
   Entypo,
@@ -54,7 +55,6 @@ import LottieView from "lottie-react-native";
 import axios from "axios";
 import cheerio from "cheerio";
 import { Audio } from "expo-av";
-import { useSharedValue } from "react-native-reanimated";
 import MemoListItem from "@/components/Memolistitem";
 import * as ImagePicker from "expo-image-picker";
 import { BlurView } from "expo-blur";
@@ -65,6 +65,15 @@ import {
 } from "react-native-gesture-handler";
 
 dayjs.extend(relativeTime);
+
+import {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  scrollTo,
+} from "react-native-reanimated";
+
+const { height } = Dimensions.get("window");
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 const ChatRoom = () => {
   const [messages, setMessages] = useState(messagesData);
@@ -85,6 +94,7 @@ const ChatRoom = () => {
   const [isRecording, setIsRecording] = useState(false);
   const lottieRef = useRef(null);
   const [replyingMessageId, setReplyingMessageId] = useState(null);
+  const scrollY = useSharedValue(0);
 
   async function StartRecording() {
     console.log("start Recording");
@@ -106,6 +116,7 @@ const ChatRoom = () => {
       recordingRef.current = recording;
 
       recording.setOnRecordingStatusUpdate((status) => {
+        console.log(status.meter);
         if (status.metering) {
           const currentMetering = status.metering || -100;
           metering.value = currentMetering;
@@ -239,6 +250,12 @@ const ChatRoom = () => {
     }
   }, []);
 
+  const groupedMessages = groupMessagesByDate(messages);
+  const groupedMessagesArray = Object.keys(groupedMessages).map((date) => ({
+    date,
+    messages: groupedMessages[date],
+  }));
+
   const isMyMessage = useCallback((message) => {
     return message.user.id === "u1"; // assuming "u1" is the current user
   }, []);
@@ -257,7 +274,7 @@ const ChatRoom = () => {
           type: "text",
           createdAt: new Date().toISOString(),
           user: { id: "u1", name: "User" },
-          replyTo: replyingMessageId || null,
+          repliedTo: replyingMessageId || null,
         };
 
         return [newMsg, ...prevMessages];
@@ -276,8 +293,10 @@ const ChatRoom = () => {
     const myMessage = isMyMessage(item);
 
     const renderReplyingMessage = (item) => {
-      if (item.replyTo) {
-        const repliedMessage = messages.find((msg) => msg.id === item.replyTo);
+      if (item.repliedTo) {
+        const repliedMessage = messages.find(
+          (msg) => msg.id === item.repliedTo
+        );
         if (repliedMessage && repliedMessage.type === "text") {
           return (
             <View style={{ alignItems: "flex-end", opacity: 0.5 }}>
@@ -416,6 +435,68 @@ const ChatRoom = () => {
     );
   };
 
+  const flattenGroupedMessages = useCallback(() => {
+    return groupedMessagesArray.reduce((acc, group) => {
+      return [...acc, ...group.messages];
+    }, []);
+  }, [groupedMessagesArray]);
+
+  const scrollToMessage = (repliedToMessageId) => {
+    const flattenedMessages = flattenGroupedMessages();
+
+    const messageIndex = flattenedMessages.findIndex(
+      (message) => message.id === repliedToMessageId
+    );
+
+    if (messageIndex !== -1 && flatListRef.current) {
+      console.log(`Scrolling to index: ${messageIndex}`); // Debug log
+
+      flatListRef.current.scrollToIndex({
+        animated: true,
+        index: messageIndex,
+        viewPosition: 0.8, // Scroll to the end of the visible area
+        viewOffset: 10, // Adjust this offset value as needed
+      });
+    } else {
+      console.log("Message not found or flatListRef is null");
+    }
+  };
+
+  // const scrollToMessage = (repliedToMessageId) => {
+  //   const flattenedMessages = flattenGroupedMessages();
+
+  //   const messageIndex = flattenedMessages.findIndex(
+  //     (message) => message.id === repliedToMessageId
+  //   );
+
+  //   if (messageIndex !== -1 && flatListRef.current) {
+  //     const invertedIndex = flattenedMessages.length - 1 - messageIndex;
+
+  //     flatListRef.current.scrollToIndex({
+  //       animated: true,
+  //       index: invertedIndex,
+  //       viewPosition: 1, // Adjust this value as needed
+  //     });
+  //   } else {
+  //     console.log("Message not found or flatListRef is null");
+  //   }
+  // };
+
+  // const scrollToMessage = (repliedToId) => {
+  //   if (!repliedToId) return;
+
+  //   const messageIndex = messages.findIndex((msg) => msg.id === repliedToId);
+
+  //   if (messageIndex !== -1 && flatListRef.current) {
+  //     flatListRef.current.scrollToIndex({
+  //       animated: true,
+  //       index: messageIndex,
+  //     });
+  //   } else {
+  //     console.log("Message not found or flashListRef is null");
+  //   }
+  // };
+
   const renderMessageItem = ({ item }) => {
     const myMessage = isMyMessage(item);
     const swipeableRef = swipeableRefs.current[item.id] || React.createRef();
@@ -450,6 +531,7 @@ const ChatRoom = () => {
         </RectButton>
       );
     };
+
     const renderRightActions = (progress, dragX) => {
       const scale = progress.interpolate({
         inputRange: [0, 1],
@@ -494,68 +576,48 @@ const ChatRoom = () => {
     };
 
     return (
-      <>
-        <Pressable
-          onPress={() => {
-            const messageIndex = messages.findIndex(
-              (msg) => msg.id === item.replyTo
-            );
-
-            console.log("this is the log for item.replyTo", item.replyTo);
-            console.log("this is message index", messageIndex);
-            console.log("this is messages.length", messages.length);
-
-            if (messageIndex >= 0 && messageIndex < messages.length) {
-              flatListRef.current?.scrollToIndex({
-                index: messageIndex,
-                animated: true,
-                viewPosition: 0.5, // Center the item in the view
-              });
-            } else {
-              console.log("Message not found or index out of bounds!");
-            }
+      <Pressable
+        onPress={() => {
+          if (item.repliedTo) {
+            scrollToMessage(item.repliedTo);
+          } else {
+            console.log("This message is not a reply.");
+          }
+        }}
+        style={[
+          styles.messageContainer,
+          item.type === "voice" && { width: "80%" },
+          myMessage ? [styles.myMessage] : [styles.otherMessage],
+        ]}
+      >
+        <Swipeable
+          ref={swipeableRef}
+          {...(myMessage ? { renderRightActions } : { renderLeftActions })}
+          onSwipeableWillOpen={() => {
+            swipeableRef.current.close();
+            onSwipeableWillOpen(item);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            textInputRef.current.focus();
           }}
-          style={[
-            styles.messageContainer,
-            item.type === "voice" && { width: "80%" },
-            myMessage ? [styles.myMessage] : [styles.otherMessage],
+          overshootLeft={false}
+          overshootRight={false}
+          leftThreshold={70}
+          friction={2}
+          containerStyle={[
+            !myMessage && {
+              marginLeft: 10,
+            },
+            myMessage && {
+              marginRight: 10,
+            },
+            { overflow: "visible" },
           ]}
         >
-          <Swipeable
-            ref={swipeableRef}
-            {...(myMessage ? { renderRightActions } : { renderLeftActions })}
-            onSwipeableWillOpen={() => [
-              swipeableRef.current.close(),
-              onSwipeableWillOpen(item),
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
-              textInputRef.current.focus(),
-            ]}
-            overshootLeft={false}
-            overshootRight={false}
-            leftThreshold={70}
-            friction={2}
-            containerStyle={[
-              !myMessage && {
-                marginLeft: 10,
-              },
-              myMessage && {
-                marginRight: 10,
-              },
-              { overflow: "visible" },
-            ]}
-          >
-            <MessageItemRender item={item} />
-          </Swipeable>
-        </Pressable>
-      </>
+          <MessageItemRender item={item} />
+        </Swipeable>
+      </Pressable>
     );
   };
-
-  const groupedMessages = groupMessagesByDate(messages);
-  const groupedMessagesArray = Object.keys(groupedMessages).map((date) => ({
-    date,
-    messages: groupedMessages[date],
-  }));
 
   const [linkMetadata, setLinkMetadata] = useState();
   // Updated URL pattern to capture a broader range of domain suffixes
@@ -641,6 +703,35 @@ const ChatRoom = () => {
     }
   };
 
+  // const calculateEstimatedItemSize = () => {
+  //   // Sample items to estimate average height
+  //   const sampleMessages = groupedMessagesArray.slice(0, 10);
+
+  //   // Estimate the total height
+  //   let totalHeight = 0;
+  //   sampleMessages.forEach((item) => {
+  //     totalHeight += getItemHeight(item);
+  //   });
+
+  //   // Calculate average height
+  //   return totalHeight / sampleMessages.length;
+  // };
+
+  // const getItemHeight = (item) => {
+  //   // Return the height based on your specific conditions
+  //   // Adjust according to the type, content, or media in the message
+  //   if (item.type === "text") {
+  //     return 80; // Adjust this value based on your text message height
+  //   } else if (item.type === "voice") {
+  //     return 100; // Adjust this value for voice messages
+  //   } else if (item.type === "image") {
+  //     return 150; // Adjust for image messages
+  //   }
+
+  //   // Default height if type is unknown
+  //   return 100;
+  // };
+
   //BottomSheet component
 
   const bottomSheetRef = useRef(null);
@@ -652,69 +743,22 @@ const ChatRoom = () => {
   };
 
   return (
-    <View style={styles.safeArea}>
-      {isRecording && (
-        <BlurView intensity={20} style={styles.absolute}>
-          <LottieView
-            ref={lottieRef}
-            source={require("@/assets/lottie/soundwaveprimary.json")}
-            autoPlay
-            loop
-            style={styles.lottie}
-          />
-        </BlurView>
-      )}
-
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Entypo name="chevron-left" size={24} color={Colors.light.text} />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <View style={styles.headerMiddle}>
-            <Image
-              source={{ uri: senderImage }}
-              style={{ width: 40, height: 40, borderRadius: 25 }}
-            />
-
-            <Text style={styles.headerTitle}>{sender}</Text>
-          </View>
-        </View>
-        <View style={styles.headerIcons}>
-          <Pressable style={styles.icon}>
-            <FontAwesome
-              name="video-camera"
-              size={24}
-              color={Colors.light.text}
-            />
-          </Pressable>
-          <Pressable style={styles.icon}>
-            <FontAwesome name="phone" size={24} color={Colors.light.text} />
-          </Pressable>
-          <Pressable style={styles.icon}>
-            <Entypo
-              name="dots-three-vertical"
-              size={24}
-              color={Colors.light.text}
-            />
-          </Pressable>
-        </View>
-      </View>
-
-      <ImageBackground source={bg} style={styles.backgroundImage}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 90}
-          style={styles.container}
-        >
-          <FlashList
-            estimatedItemSize={500}
+    <>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        style={{ backgroundColor: "yellow" }}
+      >
+        <View style={styles.flashListContainer}>
+          <FlatList
+            estimatedItemSize={300} // Adjust this dynamically if needed
             ref={flatListRef}
             keyboardDismissMode="interactive"
             data={groupedMessagesArray}
-            contentContainerStyle={{}}
+            contentContainerStyle={{ paddingVertical: 110 }}
             keyExtractor={(item) => item.date}
             renderItem={({ item }) => (
-              <View>
+              <View style={{}}>
                 <View style={styles.dateHeader}>
                   <Text style={styles.dateHeaderText}>
                     {renderDateHeader(item.date)}
@@ -744,151 +788,206 @@ const ChatRoom = () => {
               )
             }
           />
-
-          {linkMetadata && (
-            <View>
-              {linkMetadata.image && (
+          <BlurView intensity={200} tint="light" style={[styles.header]}>
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <Entypo name="chevron-left" size={24} color={Colors.light.text} />
+            </Pressable>
+            <View style={styles.headerTitleContainer}>
+              <View style={styles.headerMiddle}>
                 <Image
-                  source={{ uri: linkMetadata.image }}
-                  style={{ width: 50, height: 50, resizeMode: "contain" }}
+                  source={{ uri: senderImage }}
+                  style={{ width: 40, height: 40, borderRadius: 25 }}
                 />
-              )}
-              {linkMetadata.title && (
-                <Text style={styles.title}>{linkMetadata.title}</Text>
-              )}
-              {linkMetadata.description && (
-                <Text style={styles.description}>
-                  {linkMetadata.description}
-                </Text>
-              )}
-            </View>
-          )}
 
-          {replyingMessageId && (
-            <Animated.View style={styles.replyingContainer}>
-              <View style={styles.replyingContent}>
-                <View style={styles.replyingUser}>
-                  <Text>
-                    <Text style={{ fontWeight: "bold" }}>
-                      {
-                        messages.find((msg) => msg.id === replyingMessageId)
-                          ?.user.name
-                      }
-                    </Text>
-                  </Text>
-                </View>
-                <Text
-                  ellipsizeMode="tail"
-                  numberOfLines={1}
-                  style={styles.replyingText}
-                >
-                  {messages.find((msg) => msg.id === replyingMessageId)?.text}
-                </Text>
+                <Text style={styles.headerTitle}>{sender}</Text>
               </View>
-              <Pressable
-                style={styles.replyingDismis}
-                onPress={() => setReplyingMessageId(null)}
-              >
-                <X color={"gray"} size={20} />
-              </Pressable>
-            </Animated.View>
-          )}
-          <View style={[styles.inputContainer]}>
-            <TouchableOpacity style={{ padding: 5 }} onPress={handleOpenPress}>
-              <Ionicons name="attach" size={24} color="black" />
-            </TouchableOpacity>
-            {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
-
-            <TextInput
-              ref={textInputRef}
-              style={styles.textInput}
-              value={newMessageRef}
-              onChangeText={handleTextChange}
-              placeholder="Type a message"
-              multiline={true}
-              autoCorrect
-            />
-
-            {!typing && (
-              <GestureDetector gesture={longPress}>
-                <Pressable
-                  style={styles.micIcon}
-                  // onPressOut={stopRecording}
-                  // onLongPress={StartRecording}
-                >
-                  <Ionicons
-                    name="mic"
-                    size={20}
-                    color={Colors.light.background}
-                  />
-                </Pressable>
-              </GestureDetector>
-            )}
-            {typing && (
-              <Pressable
-                onPress={handleSendMessage}
-                style={styles.sendButton}
-                accessibilityLabel="Send message"
-              >
-                <Ionicons
-                  name="send"
-                  size={20}
-                  color={Colors.light.background}
+            </View>
+            <View style={styles.headerIcons}>
+              <Pressable style={styles.icon}>
+                <FontAwesome
+                  name="video-camera"
+                  size={24}
+                  color={Colors.light.text}
                 />
               </Pressable>
-            )}
-          </View>
-          <>
-            <BottomSheet
-              enablePanDownToClose
-              snapPoints={snapPoints}
-              index={-1}
-              ref={bottomSheetRef}
+              <Pressable style={styles.icon}>
+                <FontAwesome name="phone" size={24} color={Colors.light.text} />
+              </Pressable>
+              <Pressable style={styles.icon}>
+                <Entypo
+                  name="dots-three-vertical"
+                  size={24}
+                  color={Colors.light.text}
+                />
+              </Pressable>
+            </View>
+          </BlurView>
+          <View
+            style={[
+              { bottom: 80, flex: 1 },
+              replyingMessageId && { bottom: 115 },
+            ]}
+          >
+            <BlurView
+              intensity={200}
+              tint="light"
+              style={[styles.inputContainer]}
             >
-              <BottomSheetView style={styles.contentContainer}>
-                <View>
-                  <TouchableOpacity
-                    onPress={pickImage}
-                    style={{
-                      backgroundColor: "gray",
-                      padding: 10,
-                      width: 70,
-                      margin: 10,
-                    }}
+              <View>
+                {linkMetadata && (
+                  <View>
+                    {linkMetadata.image && (
+                      <Image
+                        source={{ uri: linkMetadata.image }}
+                        style={{ width: 50, height: 50, resizeMode: "contain" }}
+                      />
+                    )}
+                    {linkMetadata.title && (
+                      <Text style={styles.title}>{linkMetadata.title}</Text>
+                    )}
+                    {linkMetadata.description && (
+                      <Text style={styles.description}>
+                        {linkMetadata.description}
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {replyingMessageId && (
+                  <View intensity={200} style={styles.replyingContainer}>
+                    <View style={styles.replyingContent}>
+                      <View style={styles.replyingUser}>
+                        <Text>
+                          <Text style={{ fontWeight: "bold" }}>
+                            {
+                              messages.find(
+                                (msg) => msg.id === replyingMessageId
+                              )?.user.name
+                            }
+                          </Text>
+                        </Text>
+                      </View>
+                      <Text
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={styles.replyingText}
+                      >
+                        {
+                          messages.find((msg) => msg.id === replyingMessageId)
+                            ?.text
+                        }
+                      </Text>
+                    </View>
+                    <Pressable
+                      style={styles.replyingDismis}
+                      onPress={() => setReplyingMessageId(null)}
+                    >
+                      <X color={"gray"} size={20} />
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+              <View style={[{ flexDirection: "row", alignItems: "flex-end" }]}>
+                <TouchableOpacity
+                  style={{ padding: 5 }}
+                  onPress={handleOpenPress}
+                >
+                  <Ionicons name="attach" size={24} color="black" />
+                </TouchableOpacity>
+                {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
+                <TextInput
+                  ref={textInputRef}
+                  style={styles.textInput}
+                  value={newMessageRef}
+                  onChangeText={handleTextChange}
+                  placeholder="Type a message"
+                  multiline={true}
+                  autoCorrect
+                />
+
+                {!typing && (
+                  <GestureDetector gesture={longPress}>
+                    <Pressable
+                      style={styles.micIcon}
+                      // onPressOut={stopRecording}
+                      // onLongPress={StartRecording}
+                    >
+                      <Ionicons
+                        name="mic"
+                        size={20}
+                        color={Colors.light.background}
+                      />
+                    </Pressable>
+                  </GestureDetector>
+                )}
+                {typing && (
+                  <Pressable
+                    onPress={handleSendMessage}
+                    style={styles.sendButton}
+                    accessibilityLabel="Send message"
                   >
-                    <Entypo name="camera" size={24} color="black" />
-                  </TouchableOpacity>
-                </View>
-              </BottomSheetView>
-            </BottomSheet>
-          </>
-        </KeyboardAvoidingView>
-      </ImageBackground>
-    </View>
+                    <Ionicons
+                      name="send"
+                      size={20}
+                      color={Colors.light.background}
+                    />
+                  </Pressable>
+                )}
+              </View>
+            </BlurView>
+          </View>
+        </View>
+        {isRecording && (
+          <BlurView intensity={20} style={styles.absolute}>
+            <LottieView
+              ref={lottieRef}
+              source={require("@/assets/lottie/soundwaveprimary.json")}
+              autoPlay
+              loop
+              style={styles.lottie}
+            />
+          </BlurView>
+        )}
+
+        <>
+          <BottomSheet
+            enablePanDownToClose
+            snapPoints={snapPoints}
+            index={-1}
+            ref={bottomSheetRef}
+          >
+            <BottomSheetView style={styles.contentContainer}>
+              <View>
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={{
+                    backgroundColor: "gray",
+                    padding: 10,
+                    width: 70,
+                    margin: 10,
+                  }}
+                >
+                  <Entypo name="camera" size={24} color="black" />
+                </TouchableOpacity>
+              </View>
+            </BottomSheetView>
+          </BottomSheet>
+        </>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  backgroundImage: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    justifyContent: "flex-end",
-    width: "100%",
-    height: "100%",
-  },
+  safeArea: {},
+
+  flashListContainer: { height: "100%" },
   inputContainer: {
     flexDirection: "row",
     padding: 10,
-    backgroundColor: Colors.light.background,
-    alignItems: "flex-end",
-    paddingBottom: heightPercentageToDP(4),
-    zIndex: 1000,
+    height: 120,
+    flexDirection: "column",
+    width: "100%",
   },
   textInput: {
     flex: 1,
@@ -898,7 +997,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 10,
     minHeight: hp(2), // Adjust based on line height
-    maxHeight: 80,
+    maxHeight: 90,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
@@ -978,10 +1077,11 @@ const styles = StyleSheet.create({
     top: "40%",
   },
   replyingContainer: {
-    backgroundColor: Colors.dark.text,
     justifyContent: "space-between",
     flexDirection: "row",
-    padding: 10,
+    padding: 5,
+    position: "relative",
+    width: "100%",
   },
 
   replyingContent: {
@@ -1034,19 +1134,18 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 15,
-    backgroundColor: Colors.light.background,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
     paddingTop: heightPercentageToDP(5),
+    width: "100%",
+    position: "absolute",
   },
   backButton: {
     padding: 5,
   },
   headerTitleContainer: {
-    flex: 1,
     alignItems: "center",
   },
   headerTitle: {
