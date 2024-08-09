@@ -71,6 +71,7 @@ import {
   useAnimatedScrollHandler,
   scrollTo,
 } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { height } = Dimensions.get("window");
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
@@ -744,236 +745,254 @@ const ChatRoom = () => {
 
   return (
     <>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-        style={{ backgroundColor: "yellow" }}
-      >
-        <View style={styles.flashListContainer}>
-          <FlatList
-            estimatedItemSize={300} // Adjust this dynamically if needed
-            ref={flatListRef}
-            keyboardDismissMode="interactive"
-            data={groupedMessagesArray}
-            contentContainerStyle={{ paddingVertical: 110 }}
-            keyExtractor={(item) => item.date}
-            renderItem={({ item }) => (
-              <View style={{}}>
-                <View style={styles.dateHeader}>
-                  <Text style={styles.dateHeaderText}>
-                    {renderDateHeader(item.date)}
-                  </Text>
-                </View>
-                {item.messages
-                  .slice()
-                  .reverse()
-                  .map((message) => (
-                    <View style={{}} key={message.id}>
-                      {renderMessageItem({ item: message })}
-                    </View>
-                  ))}
-              </View>
-            )}
-            inverted
-            ListHeaderComponent={
-              typing && (
-                <View>
-                  <LottieView
-                    style={styles.loader}
-                    source={require("@/assets/lottie/typing.json")}
-                    autoPlay
-                    loop
-                  />
-                </View>
-              )
-            }
-          />
-          <BlurView intensity={200} tint="light" style={[styles.header]}>
-            <Pressable onPress={() => router.back()} style={styles.backButton}>
-              <Entypo name="chevron-left" size={24} color={Colors.light.text} />
-            </Pressable>
-            <View style={styles.headerTitleContainer}>
-              <View style={styles.headerMiddle}>
-                <Image
-                  source={{ uri: senderImage }}
-                  style={{ width: 40, height: 40, borderRadius: 25 }}
-                />
-
-                <Text style={styles.headerTitle}>{sender}</Text>
-              </View>
-            </View>
-            <View style={styles.headerIcons}>
-              <Pressable style={styles.icon}>
-                <FontAwesome
-                  name="video-camera"
-                  size={24}
-                  color={Colors.light.text}
-                />
-              </Pressable>
-              <Pressable style={styles.icon}>
-                <FontAwesome name="phone" size={24} color={Colors.light.text} />
-              </Pressable>
-              <Pressable style={styles.icon}>
-                <Entypo
-                  name="dots-three-vertical"
-                  size={24}
-                  color={Colors.light.text}
-                />
-              </Pressable>
-            </View>
-          </BlurView>
-          <View
-            style={[
-              { bottom: 80, flex: 1 },
-              replyingMessageId && { bottom: 115 },
-            ]}
-          >
-            <BlurView
-              intensity={200}
-              tint="light"
-              style={[styles.inputContainer]}
-            >
-              <View>
-                {linkMetadata && (
-                  <View>
-                    {linkMetadata.image && (
-                      <Image
-                        source={{ uri: linkMetadata.image }}
-                        style={{ width: 50, height: 50, resizeMode: "contain" }}
-                      />
-                    )}
-                    {linkMetadata.title && (
-                      <Text style={styles.title}>{linkMetadata.title}</Text>
-                    )}
-                    {linkMetadata.description && (
-                      <Text style={styles.description}>
-                        {linkMetadata.description}
-                      </Text>
-                    )}
+      <LinearGradient colors={["#ece9e6", "#ffffff"]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        >
+          <View style={styles.flashListContainer}>
+            <FlatList
+              estimatedItemSize={300} // Adjust this dynamically if needed
+              ref={flatListRef}
+              keyboardDismissMode="interactive"
+              data={groupedMessagesArray}
+              contentContainerStyle={{ paddingVertical: 110 }}
+              keyExtractor={(item) => item.date}
+              renderItem={({ item }) => (
+                <View style={{}}>
+                  <View style={styles.dateHeader}>
+                    <Text style={styles.dateHeaderText}>
+                      {renderDateHeader(item.date)}
+                    </Text>
                   </View>
-                )}
+                  {item.messages
+                    .slice()
+                    .reverse()
+                    .map((message) => (
+                      <View style={{}} key={message.id}>
+                        {renderMessageItem({ item: message })}
+                      </View>
+                    ))}
+                </View>
+              )}
+              inverted
+              ListHeaderComponent={
+                typing && (
+                  <View>
+                    <LottieView
+                      style={styles.loader}
+                      source={require("@/assets/lottie/typing.json")}
+                      autoPlay
+                      loop
+                    />
+                  </View>
+                )
+              }
+            />
+            <BlurView intensity={200} tint="light" style={[styles.header]}>
+              <Pressable
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Entypo
+                  name="chevron-left"
+                  size={24}
+                  color={Colors.light.text}
+                />
+              </Pressable>
+              <View style={styles.headerTitleContainer}>
+                <View style={styles.headerMiddle}>
+                  <Image
+                    source={{ uri: senderImage }}
+                    style={{ width: 40, height: 40, borderRadius: 25 }}
+                  />
 
-                {replyingMessageId && (
-                  <View intensity={200} style={styles.replyingContainer}>
-                    <View style={styles.replyingContent}>
-                      <View style={styles.replyingUser}>
-                        <Text>
-                          <Text style={{ fontWeight: "bold" }}>
-                            {
-                              messages.find(
-                                (msg) => msg.id === replyingMessageId
-                              )?.user.name
-                            }
+                  <Text style={styles.headerTitle}>{sender}</Text>
+                </View>
+              </View>
+              <View style={styles.headerIcons}>
+                <Pressable style={styles.icon}>
+                  <FontAwesome
+                    name="video-camera"
+                    size={24}
+                    color={Colors.light.text}
+                  />
+                </Pressable>
+                <Pressable style={styles.icon}>
+                  <FontAwesome
+                    name="phone"
+                    size={24}
+                    color={Colors.light.text}
+                  />
+                </Pressable>
+                <Pressable style={styles.icon}>
+                  <Entypo
+                    name="dots-three-vertical"
+                    size={24}
+                    color={Colors.light.text}
+                  />
+                </Pressable>
+              </View>
+            </BlurView>
+            <View
+              style={[
+                { bottom: 80, flex: 1 },
+                replyingMessageId && { bottom: 115 },
+              ]}
+            >
+              <BlurView
+                intensity={200}
+                tint="light"
+                style={[styles.inputContainer]}
+              >
+                <View>
+                  {linkMetadata && (
+                    <View>
+                      {linkMetadata.image && (
+                        <Image
+                          source={{ uri: linkMetadata.image }}
+                          style={{
+                            width: 50,
+                            height: 50,
+                            resizeMode: "contain",
+                          }}
+                        />
+                      )}
+                      {linkMetadata.title && (
+                        <Text style={styles.title}>{linkMetadata.title}</Text>
+                      )}
+                      {linkMetadata.description && (
+                        <Text style={styles.description}>
+                          {linkMetadata.description}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+
+                  {replyingMessageId && (
+                    <View intensity={200} style={styles.replyingContainer}>
+                      <View style={styles.replyingContent}>
+                        <View style={styles.replyingUser}>
+                          <Text>
+                            <Text style={{ fontWeight: "bold" }}>
+                              {
+                                messages.find(
+                                  (msg) => msg.id === replyingMessageId
+                                )?.user.name
+                              }
+                            </Text>
                           </Text>
+                        </View>
+                        <Text
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          style={styles.replyingText}
+                        >
+                          {
+                            messages.find((msg) => msg.id === replyingMessageId)
+                              ?.text
+                          }
                         </Text>
                       </View>
-                      <Text
-                        ellipsizeMode="tail"
-                        numberOfLines={1}
-                        style={styles.replyingText}
+                      <Pressable
+                        style={styles.replyingDismis}
+                        onPress={() => setReplyingMessageId(null)}
                       >
-                        {
-                          messages.find((msg) => msg.id === replyingMessageId)
-                            ?.text
-                        }
-                      </Text>
+                        <X color={"gray"} size={20} />
+                      </Pressable>
                     </View>
-                    <Pressable
-                      style={styles.replyingDismis}
-                      onPress={() => setReplyingMessageId(null)}
-                    >
-                      <X color={"gray"} size={20} />
-                    </Pressable>
-                  </View>
-                )}
-              </View>
-              <View style={[{ flexDirection: "row", alignItems: "flex-end" }]}>
-                <TouchableOpacity
-                  style={{ padding: 5 }}
-                  onPress={handleOpenPress}
+                  )}
+                </View>
+                <View
+                  style={[{ flexDirection: "row", alignItems: "flex-end" }]}
                 >
-                  <Ionicons name="attach" size={24} color="black" />
-                </TouchableOpacity>
-                {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
-                <TextInput
-                  ref={textInputRef}
-                  style={styles.textInput}
-                  value={newMessageRef}
-                  onChangeText={handleTextChange}
-                  placeholder="Type a message"
-                  multiline={true}
-                  autoCorrect
-                />
+                  <TouchableOpacity
+                    style={{ padding: 5 }}
+                    onPress={handleOpenPress}
+                  >
+                    <Ionicons name="attach" size={24} color="black" />
+                  </TouchableOpacity>
+                  {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
+                  <TextInput
+                    ref={textInputRef}
+                    style={styles.textInput}
+                    value={newMessageRef}
+                    onChangeText={handleTextChange}
+                    placeholder="Type a message"
+                    multiline={true}
+                    autoCorrect
+                  />
 
-                {!typing && (
-                  <GestureDetector gesture={longPress}>
+                  {!typing && (
+                    <GestureDetector gesture={longPress}>
+                      <Pressable
+                        style={styles.micIcon}
+                        // onPressOut={stopRecording}
+                        // onLongPress={StartRecording}
+                      >
+                        <Ionicons
+                          name="mic"
+                          size={20}
+                          color={Colors.light.background}
+                        />
+                      </Pressable>
+                    </GestureDetector>
+                  )}
+                  {typing && (
                     <Pressable
-                      style={styles.micIcon}
-                      // onPressOut={stopRecording}
-                      // onLongPress={StartRecording}
+                      onPress={handleSendMessage}
+                      style={styles.sendButton}
+                      accessibilityLabel="Send message"
                     >
                       <Ionicons
-                        name="mic"
+                        name="send"
                         size={20}
                         color={Colors.light.background}
                       />
                     </Pressable>
-                  </GestureDetector>
-                )}
-                {typing && (
-                  <Pressable
-                    onPress={handleSendMessage}
-                    style={styles.sendButton}
-                    accessibilityLabel="Send message"
-                  >
-                    <Ionicons
-                      name="send"
-                      size={20}
-                      color={Colors.light.background}
-                    />
-                  </Pressable>
-                )}
-              </View>
-            </BlurView>
+                  )}
+                </View>
+              </BlurView>
+            </View>
           </View>
-        </View>
-        {isRecording && (
-          <BlurView intensity={20} style={styles.absolute}>
-            <LottieView
-              ref={lottieRef}
-              source={require("@/assets/lottie/soundwaveprimary.json")}
-              autoPlay
-              loop
-              style={styles.lottie}
-            />
-          </BlurView>
-        )}
+          {isRecording && (
+            <BlurView intensity={20} style={styles.absolute}>
+              <LottieView
+                ref={lottieRef}
+                source={require("@/assets/lottie/soundwaveprimary.json")}
+                autoPlay
+                loop
+                style={styles.lottie}
+              />
+            </BlurView>
+          )}
 
-        <>
-          <BottomSheet
-            enablePanDownToClose
-            snapPoints={snapPoints}
-            index={-1}
-            ref={bottomSheetRef}
-          >
-            <BottomSheetView style={styles.contentContainer}>
-              <View>
-                <TouchableOpacity
-                  onPress={pickImage}
-                  style={{
-                    backgroundColor: "gray",
-                    padding: 10,
-                    width: 70,
-                    margin: 10,
-                  }}
-                >
-                  <Entypo name="camera" size={24} color="black" />
-                </TouchableOpacity>
-              </View>
-            </BottomSheetView>
-          </BottomSheet>
-        </>
-      </KeyboardAvoidingView>
+          <>
+            <BottomSheet
+              enablePanDownToClose
+              snapPoints={snapPoints}
+              index={-1}
+              ref={bottomSheetRef}
+            >
+              <BottomSheetView style={styles.contentContainer}>
+                <View>
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    style={{
+                      backgroundColor: "gray",
+                      padding: 10,
+                      width: 70,
+                      margin: 10,
+                    }}
+                  >
+                    <Entypo name="camera" size={24} color="black" />
+                  </TouchableOpacity>
+                </View>
+              </BottomSheetView>
+            </BottomSheet>
+          </>
+        </KeyboardAvoidingView>
+      </LinearGradient>
     </>
   );
 };
