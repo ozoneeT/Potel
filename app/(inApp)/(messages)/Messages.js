@@ -24,6 +24,7 @@ import {
   Button,
   Animated,
   Dimensions,
+  PanResponder,
 } from "react-native";
 import {
   Entypo,
@@ -735,22 +736,125 @@ const ChatRoom = () => {
 
   //BottomSheet component
 
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        Animated.timing(translateY, {
+          toValue: -event.endCoordinates.height,
+          duration: 300,
+          useNativeDriver: true, // Ensure native driver for performance
+        }).start();
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
   const bottomSheetRef = useRef(null);
+
+  const { height } = Dimensions.get("window");
+
+  const sheetHeight = useRef(new Animated.Value(0)).current;
+  const bottomSheetOpenRef = useRef(false);
+
+  // const openSheet = () => {
+  //   Keyboard.dismiss();
+  //   bottomSheetOpenRef.current = true;
+  //   Animated.parallel([
+  //     Animated.spring(translateY, {
+  //       toValue: 0,
+  //       useNativeDriver: true,
+  //       friction: 5,
+  //     }).start(),
+  //     Animated.spring(contentMarginBottom, {
+  //       toValue: sheetHeight,
+  //       useNativeDriver: false,
+  //     }).start(),
+  //   ]);
+  // };
+
+  // const closeSheet = () => {
+  //   bottomSheetOpenRef.current = false;
+  //   Animated.parallel([
+  //     Animated.spring(translateY, {
+  //       toValue: sheetHeight,
+  //       useNativeDriver: true,
+  //     }).start(),
+  //     Animated.spring(contentMarginBottom, {
+  //       toValue: 0,
+  //       useNativeDriver: false,
+  //     }).start(),
+  //   ]);
+  // };
+
+  const openSheet = () => {
+    Animated.timing(sheetHeight, {
+      toValue: 320, // Desired height when the sheet is open
+      isInteraction: true,
+      useNativeDriver: false,
+      duration: 300,
+    }).start();
+  };
+
+  const closeSheet = () => {
+    Animated.timing(sheetHeight, {
+      toValue: 0, // Animate back to height 0
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
 
   const snapPoints = useMemo(() => ["30%"], []);
 
   const handleOpenPress = () => {
+    Keyboard.dismiss();
     bottomSheetRef.current?.snapToIndex(0);
   };
 
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        openSheet();
+      }
+    );
+
+    // Clean up the listener on unmount
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
   return (
     <>
-      <LinearGradient colors={["#ece9e6", "#ffffff"]}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-        >
-          <View style={styles.flashListContainer}>
+      <View
+        style={{
+          flex: 1,
+        }}
+      >
+        <LinearGradient colors={["#ece9e6", "#ffffff"]}>
+          {/* <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+          > */}
+          <View style={[styles.flashListContainer]}>
             <FlatList
               estimatedItemSize={300} // Adjust this dynamically if needed
               ref={flatListRef}
@@ -789,6 +893,7 @@ const ChatRoom = () => {
                 )
               }
             />
+
             <BlurView intensity={200} tint="light" style={[styles.header]}>
               <Pressable
                 onPress={() => router.back()}
@@ -906,10 +1011,7 @@ const ChatRoom = () => {
                 <View
                   style={[{ flexDirection: "row", alignItems: "flex-end" }]}
                 >
-                  <TouchableOpacity
-                    style={{ padding: 5 }}
-                    onPress={handleOpenPress}
-                  >
+                  <TouchableOpacity style={{ padding: 5 }} onPress={openSheet}>
                     <Ionicons name="attach" size={24} color="black" />
                   </TouchableOpacity>
                   {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
@@ -966,33 +1068,56 @@ const ChatRoom = () => {
               />
             </BlurView>
           )}
+          {/* </KeyboardAvoidingView> */}
+        </LinearGradient>
+      </View>
 
-          <>
-            <BottomSheet
-              enablePanDownToClose
-              snapPoints={snapPoints}
-              index={-1}
-              ref={bottomSheetRef}
+      {/* <BottomSheet
+        enablePanDownToClose
+        snapPoints={snapPoints}
+        index={-1}
+        ref={bottomSheetRef}
+        onChange={(index) => {
+          if (bottomSheetRef.current) {
+            bottomSheetRef.current.expanded = index !== -1;
+          }
+        }}
+        containerStyle={{
+          zIndex: 1000,
+        }}
+      >
+        <View style={styles.contentContainer}>
+          <View>
+            <TouchableOpacity
+              onPress={pickImage}
+              style={{
+                backgroundColor: "gray",
+                padding: 10,
+                width: 70,
+                margin: 10,
+              }}
             >
-              <BottomSheetView style={styles.contentContainer}>
-                <View>
-                  <TouchableOpacity
-                    onPress={pickImage}
-                    style={{
-                      backgroundColor: "gray",
-                      padding: 10,
-                      width: 70,
-                      margin: 10,
-                    }}
-                  >
-                    <Entypo name="camera" size={24} color="black" />
-                  </TouchableOpacity>
-                </View>
-              </BottomSheetView>
-            </BottomSheet>
-          </>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+              <Entypo name="camera" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </BottomSheet> */}
+
+      <Animated.View
+        style={[
+          styles.bottomSheet,
+          {
+            height: sheetHeight,
+          },
+        ]}
+      >
+        <View style={styles.sheetContent}>
+          <Text style={{ fontSize: 18 }}>This is a custom bottom sheet!</Text>
+          <TouchableOpacity onPress={closeSheet} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </>
   );
 };
@@ -1007,6 +1132,7 @@ const styles = StyleSheet.create({
     height: 120,
     flexDirection: "column",
     width: "100%",
+    zIndex: 1000,
   },
   textInput: {
     flex: 1,
@@ -1219,6 +1345,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  contentContainer: {
+    zIndex: 1000,
+    height: "100%",
+  },
+
+  bottomSheet: {
+    width: "100%",
+    backgroundColor: "white",
+    overflow: "hidden", // To ensure smooth animation
+  },
+  sheetContent: {
+    padding: 20,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  sheetContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
