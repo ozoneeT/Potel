@@ -1011,7 +1011,12 @@ const ChatRoom = () => {
                 <View
                   style={[{ flexDirection: "row", alignItems: "flex-end" }]}
                 >
-                  <TouchableOpacity style={{ padding: 5 }} onPress={openSheet}>
+                  <TouchableOpacity
+                    style={{ padding: 5 }}
+                    onPress={() => {
+                      Keyboard.dismiss(); // Dismiss the keyboard
+                    }}
+                  >
                     <Ionicons name="attach" size={24} color="black" />
                   </TouchableOpacity>
                   {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
@@ -1022,6 +1027,9 @@ const ChatRoom = () => {
                     onChangeText={handleTextChange}
                     placeholder="Type a message"
                     multiline={true}
+                    onFocus={() => {
+                      openSheet(); // Open bottom sheet when TextInput is focused
+                    }}
                     autoCorrect
                   />
 
