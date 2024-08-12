@@ -29,27 +29,10 @@ import { Platform } from "react-native";
 dayjs.extend(relativeTime);
 import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
+import Card from "@/components/Card";
 
 const Messaging = () => {
-  const [selectedIndex, setSelectedIndex] = useState("All");
   const navigation = useNavigation();
-  const flatListRef = useRef(null);
-
-  const rotationAnimation = useSharedValue(0);
-  const startAnimation = () => {
-    rotationAnimation.value = withRepeat(
-      withSequence(
-        withTiming(25, { duration: 150 }),
-        withTiming(0, { duration: 150 })
-      ),
-      4,
-      false
-    );
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotationAnimation.value}deg` }],
-  }));
 
   const Chats = React.memo(({ item }) => {
     const headerHight = useHeaderHeight();
@@ -118,12 +101,7 @@ const Messaging = () => {
   // Example data for FlatList
 
   return (
-    <SafeAreaView
-      style={[
-        Platform.OS === "android" ? { marginTop: headerHight } : null,
-        { flex: 1 },
-      ]}
-    >
+    <View style={{ flex: 1 }}>
       <FlashList
         estimatedItemSize={500}
         data={chats}
@@ -131,47 +109,48 @@ const Messaging = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <Chats item={item} navigation={navigation} />}
         ListHeaderComponent={
-          <View style={styles.headerContainer}>
-            <View style={styles.segmentContainer}>
-              <FlashList
-                estimatedItemSize={20}
-                data={[
-                  "All",
-                  "Unreads",
-                  "Groups",
-                  "LikeMinded",
-                  "Collaboration",
-                ]}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                renderItem={({ item }) => {
-                  return (
-                    <Pressable
-                      onPress={() => [
-                        setSelectedIndex(item),
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
-                      ]}
-                      style={[
-                        styles.segment,
-                        selectedIndex === item && {
-                          backgroundColor: Colors.dark.primary,
-                        },
-                      ]}
-                    >
-                      <Text>{item}</Text>
-                    </Pressable>
-                  );
-                }}
-              />
-            </View>
-          </View>
+          // <View style={styles.headerContainer}>
+          //   <View style={styles.segmentContainer}>
+          //     <FlashList
+          //       estimatedItemSize={20}
+          //       data={[
+          //         "All",
+          //         "Unreads",
+          //         "Groups",
+          //         "LikeMinded",
+          //         "Collaboration",
+          //       ]}
+          //       horizontal
+          //       showsHorizontalScrollIndicator={false}
+          //       renderItem={({ item }) => {
+          //         return (
+          //           <Pressable
+          //             onPress={() => [
+          //               setSelectedIndex(item),
+          //               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+          //             ]}
+          //             style={[
+          //               styles.segment,
+          //               selectedIndex === item && {
+          //                 backgroundColor: Colors.dark.primary,
+          //               },
+          //             ]}
+          //           >
+          //             <Text>{item}</Text>
+          //           </Pressable>
+          //         );
+          //       }}
+          //     />
+          //   </View>
+          // </View>
+          <></>
         }
         contentContainerStyle={{
           paddingBottom: 40,
           backgroundColor: "#fff",
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

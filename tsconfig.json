@@ -11,12 +11,14 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "app/(inApp)/(tabs)/index.js",
-    "app/(inApp)/(tabs)/schedulecopy.js",
-    "app/(inApp)/(tabs)/_layout.js",
+    "app/(inApp)/(drawer)/(tabs)/index.js",
+    "app/(inApp)/(drawer)/(tabs)/schedulecopy.js",
+    "app/(inApp)/(drawer)/(tabs)/_layout.js",
     "app/(inApp)/(taskform)/Goal.tsxxx",
     "app/(inApp)/(taskform)/Reminder.js",
     "app/(inApp)/(messages)/Messages.js",
-    "app/(inApp)/(tabs)/Voicenote.js"
+    "app/(inApp)/(drawer)/(tabs)/Voicenote.js",
+    "components/AppleStyleSwipeableRow.js",
+    "components/AppleStyleSwipeableRow.js"
   ]
 }
