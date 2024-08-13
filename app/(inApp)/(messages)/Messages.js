@@ -866,29 +866,6 @@ const ChatRoom = () => {
               style={[styles.inputContainer]}
             >
               <View>
-                {linkMetadata && (
-                  <View>
-                    {linkMetadata.image && (
-                      <Image
-                        source={{ uri: linkMetadata.image }}
-                        style={{
-                          width: 50,
-                          height: 50,
-                          resizeMode: "contain",
-                        }}
-                      />
-                    )}
-                    {linkMetadata.title && (
-                      <Text style={styles.title}>{linkMetadata.title}</Text>
-                    )}
-                    {linkMetadata.description && (
-                      <Text style={styles.description}>
-                        {linkMetadata.description}
-                      </Text>
-                    )}
-                  </View>
-                )}
-
                 {replyingMessageId && (
                   <View intensity={200} style={styles.replyingContainer}>
                     <View style={styles.replyingContent}>
@@ -920,6 +897,58 @@ const ChatRoom = () => {
                     >
                       <X color={"gray"} size={20} />
                     </Pressable>
+                  </View>
+                )}
+
+                {linkMetadata && (
+                  <View style={styles.linkMetadataContainer}>
+                    <View>
+                      {linkMetadata.image && (
+                        <Image
+                          source={{ uri: linkMetadata.image }}
+                          style={[
+                            styles.linkMetadataImage,
+                            {
+                              width: 50,
+                              height: 50,
+                              resizeMode: "contain",
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
+                    <View style={{ width: "75%", backgroundColor: "yellow" }}>
+                      {linkMetadata.title && (
+                        <Text
+                          style={[styles.linkMetadataTitle]}
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                        >
+                          {linkMetadata.title} title
+                        </Text>
+                      )}
+                      {linkMetadata.description && (
+                        <View style={styles.linkMetadatadescription}>
+                          <Text ellipsizeMode="tail" numberOfLines={3}>
+                            {linkMetadata.description} description
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: "red",
+                        alignItems: "flex-end",
+                      }}
+                    >
+                      <Pressable
+                        style={styles.linkMetaDataCancel}
+                        onPress={() => setReplyingMessageId(null)}
+                      >
+                        <X color={"gray"} size={20} />
+                      </Pressable>
+                    </View>
                   </View>
                 )}
               </View>
@@ -1181,6 +1210,33 @@ const styles = StyleSheet.create({
   },
   replyingInMessageText: { fontSize: 13 },
   replyingUser: { marginVertical: 5 },
+
+  linkMetadataContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  linkMetadataImage: {
+    marginLeft: -10,
+    marginRight: 10,
+  },
+  linkMetadataTitle: {
+    fontWeight: "bold",
+    fontSize: hp(2),
+  },
+  linkMetadatadescription: {
+    alignSelf: "flex-start",
+    fontSize: hp(1),
+  },
+  linkMetaDataCancel: {
+    height: 25,
+    width: 25,
+    backgroundColor: "lightgrey",
+    borderRadius: 20,
+    fontSize: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   menu: {
     position: "absolute",
     top: 0,
