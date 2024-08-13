@@ -19,6 +19,7 @@
     "app/(inApp)/(messages)/Messages.js",
     "app/(inApp)/(drawer)/(tabs)/Voicenote.js",
     "components/AppleStyleSwipeableRow.js",
-    "components/AppleStyleSwipeableRow.js"
+    "components/AppleStyleSwipeableRow.js",
+    "components/Memolistitem.js"
   ]
 }
