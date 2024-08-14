@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  memo,
 } from "react";
 import {
   View,
@@ -72,6 +73,8 @@ import {
   useAnimatedScrollHandler,
   scrollTo,
   Easing,
+  interpolate,
+  Extrapolate,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -100,9 +103,65 @@ const ChatRoom = () => {
   const [replyingMessageId, setReplyingMessageId] = useState(null);
 
   const scrollY = useSharedValue(0);
+
   const meteringValue = useRef(new Animated.Value(0)).current;
   const [meteringValues, setMeteringValues] = useState([]);
-  const maxValues = 10;
+
+  const maxValues = 50;
+  const compressionThreshold = maxValues * 0.8;
+
+  // async function StartRecording() {
+  //   console.log("start Recording");
+  //   try {
+  //     audioMeteringRef.current = [];
+  //     setIsRecording(true);
+
+  //     await Audio.requestPermissionsAsync();
+  //     await Audio.setAudioModeAsync({
+  //       allowsRecordingIOS: true,
+  //       playsInSilentModeIOS: true,
+  //     });
+
+  //     const { recording } = await Audio.Recording.createAsync(
+  //       Audio.RecordingOptionsPresets.HIGH_QUALITY,
+  //       undefined,
+  //       100
+  //     );
+  //     recordingRef.current = recording;
+
+  //     recording.setOnRecordingStatusUpdate((status) => {
+  //       if (status.metering) {
+  //         const currentMetering = status.metering || -100;
+
+  //         const scale = Math.max(0.1, 1 + currentMetering / 50);
+
+  //         meteringValue.setValue(scale);
+
+  //         audioMeteringRef.current = [...audioMeteringRef.current, scale];
+
+  //         setMeteringValues((prev) => {
+  //           let newValues = [...prev, scale];
+
+  //           if (newValues.length > compressionThreshold) {
+  //             const excess = newValues.length - compressionThreshold;
+
+  //             // Gradually compress the excess lines
+  //             for (let i = 0; i < excess; i++) {
+  //               const index = i % newValues.length;
+  //               newValues[index] =
+  //                 (newValues[index] + newValues[index + 1]) / 2;
+  //               newValues.splice(index + 1, 1);
+  //             }
+  //           }
+
+  //           return newValues;
+  //         });
+  //       }
+  //     });
+  //   } catch (err) {
+  //     console.error("Failed to start recording", err);
+  //   }
+  // }
 
   async function StartRecording() {
     console.log("start Recording");
@@ -128,7 +187,7 @@ const ChatRoom = () => {
           const currentMetering = status.metering || -100;
 
           // Calculate the scale based on metering value
-          const scale = Math.max(0.5, 1 + currentMetering / 100);
+          const scale = Math.max(0.1, 1 + currentMetering / 50);
 
           // Set the animated value
           meteringValue.setValue(scale); // Directly set the scale value
@@ -139,13 +198,10 @@ const ChatRoom = () => {
             ...audioMeteringRef.current,
             currentMetering,
           ];
-          setMeteringValues((prev) => [...prev, scale]);
-          if (!isRecording && meteringValues.length > maxValues) {
-            setMeteringValues((prev) => {
-              const newValues = [...prev, scale];
-              return newValues.slice(-maxValues);
-            });
-          }
+          setMeteringValues((prev) => {
+            const newValues = [...prev, scale];
+            return newValues.slice(-maxValues);
+          });
         }
       });
     } catch (err) {
@@ -207,6 +263,93 @@ const ChatRoom = () => {
       recordingRef.current = null; // Reset the recording reference
     }
   }
+
+  const processMeteringData = (meteringData, numLines = 35) => {
+    const lines = [];
+    if (meteringData && meteringData.length > 0) {
+      for (let i = 0; i < numLines; i++) {
+        const start = Math.floor((i * meteringData.length) / numLines);
+        const end = Math.ceil(((i + 1) * meteringData.length) / numLines);
+        const segment = meteringData.slice(start, end);
+        const average =
+          segment.reduce((sum, value) => sum + value, 0) / segment.length;
+        lines.push(average);
+      }
+    }
+    return lines;
+  };
+
+  const FinishedRecording = ({ meteringData }) => {
+    const lines = processMeteringData(meteringData);
+
+    return (
+      <View style={styles.waveContainer}>
+        {lines.map((db, index) => (
+          <View
+            key={index}
+            style={[
+              styles.waveLine,
+              {
+                height: interpolate(
+                  db,
+                  [heightPercentageToDP(Platform.OS === "ios" ? -3 : -30), 0],
+                  [5, 50],
+                  Extrapolate.CLAMP
+                ),
+              },
+            ]}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  // const FinishedRecording = () => {
+  //   memo.metering = audioMeteringRef;
+  //   const numLines = 35;
+  //   const lines = [];
+
+  //   if (memo.metering && memo.metering.length > 0) {
+  //     for (let i = 0; i < numLines; i++) {
+  //       const meteringIndex = Math.floor((i * memo.metering.length) / numLines);
+  //       const nextMeteringIndex = Math.ceil(
+  //         ((i + 1) * memo.metering.length) / numLines
+  //       );
+  //       const values = memo.metering.slice(meteringIndex, nextMeteringIndex);
+  //       const average = values.reduce((sum, a) => sum + a, 0) / values.length;
+  //       lines.push(average);
+  //     }
+  //   }
+  //   console.log(lines);
+  //   return (
+  //     <View style={styles.wave}>
+  //       {lines.map((db, index) => (
+  //         <View
+  //           key={index}
+  //           style={[
+  //             styles.waveLine,
+  //             {
+  //               height: interpolate(
+  //                 db,
+  //                 [heightPercentageToDP(Platform.OS === "ios" ? -3 : -30), 0],
+  //                 [5, 50],
+  //                 Extrapolate.CLAMP
+  //               ),
+  //               borderColor:
+  //                 progress > index / lines.length
+  //                   ? Colors.light.primary
+  //                   : "gainsboro",
+  //               backgroundColor:
+  //                 progress > index / lines.length
+  //                   ? Colors.light.primary
+  //                   : "gainsboro",
+  //             },
+  //           ]}
+  //         />
+  //       ))}
+  //     </View>
+  //   );
+  // };
 
   const handleDelete = (id) => {
     setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
@@ -791,281 +934,291 @@ const ChatRoom = () => {
         }}
       >
         <LinearGradient colors={["#ece9e6", "#ffffff"]}>
-          {/* <KeyboardAvoidingView
+          <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-          > */}
-          <View style={[styles.flashListContainer]}>
-            <FlatList
-              estimatedItemSize={300} // Adjust this dynamically if needed
-              ref={flatListRef}
-              keyboardDismissMode="interactive"
-              data={groupedMessagesArray}
-              contentContainerStyle={{
-                paddingTop: hp("6%"),
-                paddingBottom: hp("15%"),
-              }}
-              keyExtractor={(item) => item.date}
-              renderItem={({ item }) => (
-                <View style={{}}>
-                  <View style={styles.dateHeader}>
-                    <Text style={styles.dateHeaderText}>
-                      {renderDateHeader(item.date)}
-                    </Text>
-                  </View>
-                  {item.messages
-                    .slice()
-                    .reverse()
-                    .map((message) => (
-                      <View style={{}} key={message.id}>
-                        {renderMessageItem({ item: message })}
-                      </View>
-                    ))}
-                </View>
-              )}
-              ListHeaderComponent={() => {}}
-              inverted
-            />
-
-            <BlurView intensity={200} tint="light" style={[styles.header]}>
-              <Pressable
-                onPress={() => router.back()}
-                style={styles.backButton}
-              >
-                <Entypo
-                  name="chevron-left"
-                  size={24}
-                  color={Colors.light.text}
-                />
-              </Pressable>
-              <View style={styles.headerTitleContainer}>
-                <View style={styles.headerMiddle}>
-                  <Image
-                    source={{ uri: senderImage }}
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 25,
-                      marginRight: 10,
-                    }}
-                  />
+          >
+            <View style={[styles.flashListContainer]}>
+              {/* <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+            > */}
+              <FlatList
+                estimatedItemSize={300} // Adjust this dynamically if needed
+                ref={flatListRef}
+                keyboardDismissMode="interactive"
+                data={groupedMessagesArray}
+                contentContainerStyle={{
+                  paddingTop: hp("6%"),
+                  paddingBottom: hp("15%"),
+                }}
+                keyExtractor={(item) => item.date}
+                renderItem={({ item }) => (
                   <View style={{}}>
-                    <Text style={styles.headerTitle}>{sender}</Text>
-                    {typingText && <Text>Typing ...</Text>}
-                  </View>
-                </View>
-              </View>
-              <View style={styles.headerIcons}>
-                <Pressable style={styles.icon}>
-                  <FontAwesome
-                    name="video-camera"
-                    size={24}
-                    color={Colors.light.text}
-                  />
-                </Pressable>
-                <Pressable style={styles.icon}>
-                  <FontAwesome
-                    name="phone"
-                    size={24}
-                    color={Colors.light.text}
-                  />
-                </Pressable>
-                <Pressable style={styles.icon}>
-                  <Entypo
-                    name="dots-three-vertical"
-                    size={24}
-                    color={Colors.light.text}
-                  />
-                </Pressable>
-              </View>
-            </BlurView>
-
-            <BlurView
-              intensity={400}
-              tint="light"
-              style={[styles.inputContainer]}
-            >
-              <View>
-                {replyingMessageId && (
-                  <View intensity={200} style={styles.replyingContainer}>
-                    <View style={styles.replyingContent}>
-                      <View style={styles.replyingUser}>
-                        <Text>
-                          <Text style={{ fontWeight: "bold" }}>
-                            {
-                              messages.find(
-                                (msg) => msg.id === replyingMessageId
-                              )?.user.name
-                            }
-                          </Text>
-                        </Text>
-                      </View>
-                      <Text
-                        ellipsizeMode="tail"
-                        numberOfLines={1}
-                        style={styles.replyingText}
-                      >
-                        {
-                          messages.find((msg) => msg.id === replyingMessageId)
-                            ?.text
-                        }
+                    <View style={styles.dateHeader}>
+                      <Text style={styles.dateHeaderText}>
+                        {renderDateHeader(item.date)}
                       </Text>
                     </View>
-                    <Pressable
-                      style={styles.replyingDismis}
-                      onPress={() => setReplyingMessageId(null)}
-                    >
-                      <X color={"gray"} size={20} />
-                    </Pressable>
+                    {item.messages
+                      .slice()
+                      .reverse()
+                      .map((message) => (
+                        <View style={{}} key={message.id}>
+                          {renderMessageItem({ item: message })}
+                        </View>
+                      ))}
                   </View>
                 )}
+                ListHeaderComponent={() => {}}
+                inverted
+              />
 
-                {linkMetadata && (
-                  <View style={styles.linkMetadataContainer}>
-                    <View>
-                      {linkMetadata.image && (
-                        <Image
-                          source={{ uri: linkMetadata.image }}
-                          style={[
-                            styles.linkMetadataImage,
-                            {
-                              width: 50,
-                              height: 50,
-                              resizeMode: "contain",
-                            },
-                          ]}
-                        />
-                      )}
+              <BlurView intensity={200} tint="light" style={[styles.header]}>
+                <Pressable
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Entypo
+                    name="chevron-left"
+                    size={24}
+                    color={Colors.light.text}
+                  />
+                </Pressable>
+                <View style={styles.headerTitleContainer}>
+                  <View style={styles.headerMiddle}>
+                    <Image
+                      source={{ uri: senderImage }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 25,
+                        marginRight: 10,
+                      }}
+                    />
+                    <View style={{}}>
+                      <Text style={styles.headerTitle}>{sender}</Text>
+                      {typingText && <Text>Typing ...</Text>}
                     </View>
-                    <View style={{ width: "75%" }}>
-                      {linkMetadata.title && (
-                        <Text
-                          style={[styles.linkMetadataTitle]}
-                          ellipsizeMode="tail"
-                          numberOfLines={1}
-                        >
-                          {linkMetadata.title} title
-                        </Text>
-                      )}
-                      {linkMetadata.description && (
-                        <View style={styles.linkMetadatadescription}>
-                          <Text ellipsizeMode="tail" numberOfLines={3}>
-                            {linkMetadata.description} description
+                  </View>
+                </View>
+                <View style={styles.headerIcons}>
+                  <Pressable style={styles.icon}>
+                    <FontAwesome
+                      name="video-camera"
+                      size={24}
+                      color={Colors.light.text}
+                    />
+                  </Pressable>
+                  <Pressable style={styles.icon}>
+                    <FontAwesome
+                      name="phone"
+                      size={24}
+                      color={Colors.light.text}
+                    />
+                  </Pressable>
+                  <Pressable style={styles.icon}>
+                    <Entypo
+                      name="dots-three-vertical"
+                      size={24}
+                      color={Colors.light.text}
+                    />
+                  </Pressable>
+                </View>
+              </BlurView>
+
+              <BlurView
+                intensity={400}
+                tint="light"
+                style={[styles.inputContainer]}
+              >
+                <View>
+                  {replyingMessageId && (
+                    <View intensity={200} style={styles.replyingContainer}>
+                      <View style={styles.replyingContent}>
+                        <View style={styles.replyingUser}>
+                          <Text>
+                            <Text style={{ fontWeight: "bold" }}>
+                              {
+                                messages.find(
+                                  (msg) => msg.id === replyingMessageId
+                                )?.user.name
+                              }
+                            </Text>
                           </Text>
                         </View>
-                      )}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-
-                        alignItems: "flex-end",
-                      }}
-                    >
+                        <Text
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          style={styles.replyingText}
+                        >
+                          {
+                            messages.find((msg) => msg.id === replyingMessageId)
+                              ?.text
+                          }
+                        </Text>
+                      </View>
                       <Pressable
-                        style={styles.linkMetaDataCancel}
-                        onPress={() => setLinkMetadata(null)}
+                        style={styles.replyingDismis}
+                        onPress={() => setReplyingMessageId(null)}
                       >
                         <X color={"gray"} size={20} />
                       </Pressable>
                     </View>
-                  </View>
-                )}
-                <FlatList
-                  data={meteringValues}
-                  horizontal
-                  keyExtractor={(item, index) => index.toString()}
-                  contentContainerStyle={{ alignItems: "center" }}
-                  renderItem={({ item }) => (
-                    <Animated.View
-                      style={[
-                        styles.line,
-                        {
-                          height: item * 30, // Adjust height based on metering scale
-                          transform: [{ scaleY: item }],
-                          borderRadius: 100,
-                        },
-                      ]}
+                  )}
+
+                  {linkMetadata && (
+                    <View style={styles.linkMetadataContainer}>
+                      <View>
+                        {linkMetadata.image && (
+                          <Image
+                            source={{ uri: linkMetadata.image }}
+                            style={[
+                              styles.linkMetadataImage,
+                              {
+                                width: 50,
+                                height: 50,
+                                resizeMode: "contain",
+                              },
+                            ]}
+                          />
+                        )}
+                      </View>
+                      <View style={{ width: "75%" }}>
+                        {linkMetadata.title && (
+                          <Text
+                            style={[styles.linkMetadataTitle]}
+                            ellipsizeMode="tail"
+                            numberOfLines={1}
+                          >
+                            {linkMetadata.title} title
+                          </Text>
+                        )}
+                        {linkMetadata.description && (
+                          <View style={styles.linkMetadatadescription}>
+                            <Text ellipsizeMode="tail" numberOfLines={3}>
+                              {linkMetadata.description} description
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <View
+                        style={{
+                          flex: 1,
+
+                          alignItems: "flex-end",
+                        }}
+                      >
+                        <Pressable
+                          style={styles.linkMetaDataCancel}
+                          onPress={() => setLinkMetadata(null)}
+                        >
+                          <X color={"gray"} size={20} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+                  {!isRecording && (
+                    <FinishedRecording
+                      meteringData={audioMeteringRef.current}
                     />
                   )}
-                  inverted // Makes the waveform grow from left to right
-                />
-              </View>
-              <View style={[{ flexDirection: "row", alignItems: "flex-end" }]}>
-                <TouchableOpacity
-                  style={{ padding: 5 }}
-                  onPress={() => {
-                    Keyboard.dismiss(); // Dismiss the keyboard
-                  }}
-                >
-                  <Ionicons name="attach" size={24} color="black" />
-                </TouchableOpacity>
-                {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
-
-                <TextInput
-                  ref={textInputRef}
-                  style={styles.textInput}
-                  value={newMessageRef}
-                  onChangeText={handleTextChange}
-                  placeholder="Type a message"
-                  multiline={true}
-                  onFocus={() => {
-                    {
-                      Platform.OS === "ios" && openSheet();
-                    }
-                  }}
-                  autoCorrect
-                />
-
-                {!typing && (
-                  // <GestureDetector gesture={longPress}>
-                  <>
-                    {isRecording ? (
-                      <Pressable
-                        style={styles.micIcon}
-                        // onPressOut={stopRecording}
-                        // onLongPress={StartRecording}
-                        onPress={stopRecording}
-                      >
-                        <Ionicons
-                          name="mic"
-                          size={20}
-                          color={Colors.light.background}
-                        />
-                      </Pressable>
-                    ) : (
-                      <Pressable
-                        style={styles.micIcon}
-                        // onPressOut={stopRecording}
-                        // onLongPress={StartRecording}
-                        onPress={StartRecording}
-                      >
-                        <Ionicons
-                          name="mic"
-                          size={20}
-                          color={Colors.light.background}
-                        />
-                      </Pressable>
+                  <FlatList
+                    data={meteringValues}
+                    horizontal
+                    keyExtractor={(item, index) => index.toString()}
+                    contentContainerStyle={{ alignItems: "center" }}
+                    renderItem={({ item }) => (
+                      <Animated.View
+                        style={[
+                          styles.line,
+                          {
+                            height: item * 30, // Adjust height based on metering scale
+                            transform: [{ scaleY: item }],
+                            borderRadius: 100,
+                          },
+                        ]}
+                      />
                     )}
-                  </>
-                )}
-                {typing && (
-                  <Pressable
-                    onPress={handleSendMessage}
-                    style={styles.sendButton}
-                    accessibilityLabel="Send message"
+                    inverted // Makes the waveform grow from left to right
+                  />
+                </View>
+                <View
+                  style={[{ flexDirection: "row", alignItems: "flex-end" }]}
+                >
+                  <TouchableOpacity
+                    style={{ padding: 5 }}
+                    onPress={() => {
+                      Keyboard.dismiss(); // Dismiss the keyboard
+                    }}
                   >
-                    <Ionicons
-                      name="send"
-                      size={20}
-                      color={Colors.light.background}
-                    />
-                  </Pressable>
-                )}
-              </View>
-            </BlurView>
-          </View>
-          {/* {isRecording && (
+                    <Ionicons name="attach" size={24} color="black" />
+                  </TouchableOpacity>
+                  {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
+
+                  <TextInput
+                    ref={textInputRef}
+                    style={styles.textInput}
+                    value={newMessageRef}
+                    onChangeText={handleTextChange}
+                    placeholder="Type a message"
+                    multiline={true}
+                    onFocus={() => {
+                      {
+                        Platform.OS === "ios" && openSheet();
+                      }
+                    }}
+                    autoCorrect
+                  />
+
+                  {!typing && (
+                    // <GestureDetector gesture={longPress}>
+                    <>
+                      {isRecording ? (
+                        <Pressable
+                          style={styles.micIcon}
+                          // onPressOut={stopRecording}
+                          // onLongPress={StartRecording}
+                          onPress={stopRecording}
+                        >
+                          <Ionicons
+                            name="mic"
+                            size={20}
+                            color={Colors.light.background}
+                          />
+                        </Pressable>
+                      ) : (
+                        <Pressable
+                          style={styles.micIcon}
+                          // onPressOut={stopRecording}
+                          // onLongPress={StartRecording}
+                          onPress={StartRecording}
+                        >
+                          <Ionicons
+                            name="mic"
+                            size={20}
+                            color={Colors.light.background}
+                          />
+                        </Pressable>
+                      )}
+                    </>
+                  )}
+                  {typing && (
+                    <Pressable
+                      onPress={handleSendMessage}
+                      style={styles.sendButton}
+                      accessibilityLabel="Send message"
+                    >
+                      <Ionicons
+                        name="send"
+                        size={20}
+                        color={Colors.light.background}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+              </BlurView>
+              {/* </KeyboardAvoidingView> */}
+            </View>
+            {/* {isRecording && (
             <View intensity={20} style={styles.absolute}>
               <LottieView
                 ref={lottieRef}
@@ -1076,7 +1229,7 @@ const ChatRoom = () => {
               />
             </View>
           )} */}
-          {/* </KeyboardAvoidingView> */}
+          </KeyboardAvoidingView>
         </LinearGradient>
       </View>
 
@@ -1111,7 +1264,7 @@ const ChatRoom = () => {
         </View>
       </BottomSheet> */}
 
-      <Animated.View
+      {/* <Animated.View
         style={[
           styles.bottomSheet,
           {
@@ -1123,7 +1276,7 @@ const ChatRoom = () => {
 
         {Platform.OS === "ios" && (
           <View style={styles.sheetContent}>
-            {/* <Animated.View
+            <Animated.View
               style={{
                 transform: [{ scale: meteringValue }],
                 width: 300,
@@ -1138,13 +1291,13 @@ const ChatRoom = () => {
               ) : (
                 <Pressable onPress={StartRecording} style={{ flex: 1 }} />
               )}
-            </Animated.View> */}
+            </Animated.View>
             <TouchableOpacity onPress={closeSheet} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         )}
-      </Animated.View>
+      </Animated.View> */}
     </>
   );
 };
@@ -1152,15 +1305,15 @@ const ChatRoom = () => {
 const styles = StyleSheet.create({
   safeArea: {},
 
-  flashListContainer: { height: "105%" },
+  flashListContainer: { height: "110%" },
   inputContainer: {
     flexDirection: "row",
     padding: 10,
     flexDirection: "column",
     width: "100%",
     zIndex: 1000,
-    bottom: hp(5),
-    paddingBottom: hp(8),
+    bottom: hp(30),
+    paddingBottom: hp(5),
   },
   textInput: {
     flex: 1,
@@ -1427,10 +1580,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   line: {
-    width: 2,
+    width: 2.5,
     backgroundColor: "lightgray",
     marginHorizontal: 1,
     boarderRadius: 100,
+  },
+  waveContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+  },
+  waveLine: {
+    flexDirection: "row",
+    width: 3,
+    marginHorizontal: 1,
+    backgroundColor: Colors.light.primary, // Adjust based on your theme
+    borderRadius: 2,
   },
 });
 

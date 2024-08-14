@@ -133,7 +133,7 @@ const MemoListItem = ({ memo }) => {
                 {
                   height: interpolate(
                     db,
-                    [heightPercentageToDP(Platform.OS === "ios" ? -6 : -30), 0],
+                    [heightPercentageToDP(Platform.OS === "ios" ? -3 : -30), 0],
                     [5, 50],
                     Extrapolate.CLAMP
                   ),
