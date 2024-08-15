@@ -106,8 +106,11 @@ const ChatRoom = () => {
 
   const meteringValue = useRef(new Animated.Value(0)).current;
   const [meteringValues, setMeteringValues] = useState([]);
+  const animatedMeteringValues = useRef(
+    new Array(maxValues).fill(new Animated.Value(1))
+  ); // Initialize animated values
 
-  const maxValues = 50;
+  const maxValues = 100;
   const compressionThreshold = maxValues * 0.8;
 
   // async function StartRecording() {
@@ -928,26 +931,21 @@ const ChatRoom = () => {
 
   return (
     <>
-      <View
-        style={{
-          flex: 1,
-        }}
-      >
-        <LinearGradient colors={["#ece9e6", "#ffffff"]}>
+      <View style={{ overflow: "hidden" }}>
+        <LinearGradient colors={["#ece9e6", "#efefef"]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ height: "100%" }}
+            keyboardVerticalOffset={-70}
           >
             <View style={[styles.flashListContainer]}>
-              {/* <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-            > */}
               <FlatList
-                estimatedItemSize={300} // Adjust this dynamically if needed
+                estimatedItemSize={300}
                 ref={flatListRef}
                 keyboardDismissMode="interactive"
                 data={groupedMessagesArray}
                 contentContainerStyle={{
-                  paddingTop: hp("6%"),
+                  paddingTop: hp("20%"),
                   paddingBottom: hp("15%"),
                 }}
                 keyExtractor={(item) => item.date}
@@ -1089,13 +1087,13 @@ const ChatRoom = () => {
                             ellipsizeMode="tail"
                             numberOfLines={1}
                           >
-                            {linkMetadata.title} title
+                            {linkMetadata.title}
                           </Text>
                         )}
                         {linkMetadata.description && (
                           <View style={styles.linkMetadatadescription}>
-                            <Text ellipsizeMode="tail" numberOfLines={3}>
-                              {linkMetadata.description} description
+                            <Text ellipsizeMode="tail" numberOfLines={1}>
+                              {linkMetadata.description}
                             </Text>
                           </View>
                         )}
@@ -1121,26 +1119,8 @@ const ChatRoom = () => {
                       meteringData={audioMeteringRef.current}
                     />
                   )}
-                  <FlatList
-                    data={meteringValues}
-                    horizontal
-                    keyExtractor={(item, index) => index.toString()}
-                    contentContainerStyle={{ alignItems: "center" }}
-                    renderItem={({ item }) => (
-                      <Animated.View
-                        style={[
-                          styles.line,
-                          {
-                            height: item * 30, // Adjust height based on metering scale
-                            transform: [{ scaleY: item }],
-                            borderRadius: 100,
-                          },
-                        ]}
-                      />
-                    )}
-                    inverted // Makes the waveform grow from left to right
-                  />
                 </View>
+
                 <View
                   style={[{ flexDirection: "row", alignItems: "flex-end" }]}
                 >
@@ -1152,22 +1132,47 @@ const ChatRoom = () => {
                   >
                     <Ionicons name="attach" size={24} color="black" />
                   </TouchableOpacity>
-                  {/* <Animated.View style={[animatedRecordWave, styles.recordWave]} /> */}
-
-                  <TextInput
-                    ref={textInputRef}
-                    style={styles.textInput}
-                    value={newMessageRef}
-                    onChangeText={handleTextChange}
-                    placeholder="Type a message"
-                    multiline={true}
-                    onFocus={() => {
-                      {
-                        Platform.OS === "ios" && openSheet();
-                      }
-                    }}
-                    autoCorrect
-                  />
+                  <View style={styles.textInput}>
+                    {isRecording ? (
+                      <View style={styles.recordingWaveLine}>
+                        <FlatList
+                          data={[...meteringValues].reverse()}
+                          horizontal
+                          keyExtractor={(item, index) => index.toString()}
+                          contentContainerStyle={{
+                            alignItems: "center",
+                          }}
+                          renderItem={({ item }) => (
+                            <Animated.View
+                              style={[
+                                styles.line,
+                                {
+                                  height: item * 30, // Adjust height based on metering scale
+                                  transform: [{ scaleY: item }],
+                                  borderRadius: 100,
+                                },
+                              ]}
+                            />
+                          )}
+                          inverted // Makes the waveform grow from left to right
+                        />
+                      </View>
+                    ) : (
+                      <TextInput
+                        ref={textInputRef}
+                        value={newMessageRef}
+                        onChangeText={handleTextChange}
+                        placeholder="Type a message"
+                        multiline={true}
+                        onFocus={() => {
+                          {
+                            Platform.OS === "ios" && openSheet();
+                          }
+                        }}
+                        autoCorrect
+                      />
+                    )}
+                  </View>
 
                   {!typing && (
                     // <GestureDetector gesture={longPress}>
@@ -1175,8 +1180,6 @@ const ChatRoom = () => {
                       {isRecording ? (
                         <Pressable
                           style={styles.micIcon}
-                          // onPressOut={stopRecording}
-                          // onLongPress={StartRecording}
                           onPress={stopRecording}
                         >
                           <Ionicons
@@ -1218,7 +1221,8 @@ const ChatRoom = () => {
               </BlurView>
               {/* </KeyboardAvoidingView> */}
             </View>
-            {/* {isRecording && (
+          </KeyboardAvoidingView>
+          {/* {isRecording && (
             <View intensity={20} style={styles.absolute}>
               <LottieView
                 ref={lottieRef}
@@ -1229,75 +1233,8 @@ const ChatRoom = () => {
               />
             </View>
           )} */}
-          </KeyboardAvoidingView>
         </LinearGradient>
       </View>
-
-      {/* <BottomSheet
-        enablePanDownToClose
-        snapPoints={snapPoints}
-        index={-1}
-        ref={bottomSheetRef}
-        onChange={(index) => {
-          if (bottomSheetRef.current) {
-            bottomSheetRef.current.expanded = index !== -1;
-          }
-        }}
-        containerStyle={{
-          zIndex: 1000,
-        }}
-      >
-        <View style={styles.contentContainer}>
-          <View>
-            <TouchableOpacity
-              onPress={pickImage}
-              style={{
-                backgroundColor: "gray",
-                padding: 10,
-                width: 70,
-                margin: 10,
-              }}
-            >
-              <Entypo name="camera" size={24} color="black" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </BottomSheet> */}
-
-      {/* <Animated.View
-        style={[
-          styles.bottomSheet,
-          {
-            height: sheetHeight,
-          },
-        ]}
-      >
-        <Text style={{ color: "red" }}>hello</Text>
-
-        {Platform.OS === "ios" && (
-          <View style={styles.sheetContent}>
-            <Animated.View
-              style={{
-                transform: [{ scale: meteringValue }],
-                width: 300,
-                height: 300,
-                borderRadius: 150,
-                backgroundColor: "red",
-              }}
-            >
-              
-              {isRecording ? (
-                <Pressable onPress={stopRecording} style={{ flex: 1 }} />
-              ) : (
-                <Pressable onPress={StartRecording} style={{ flex: 1 }} />
-              )}
-            </Animated.View>
-            <TouchableOpacity onPress={closeSheet} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </Animated.View> */}
     </>
   );
 };
@@ -1305,16 +1242,17 @@ const ChatRoom = () => {
 const styles = StyleSheet.create({
   safeArea: {},
 
-  flashListContainer: { height: "110%" },
+  flashListContainer: { height: "120%" },
   inputContainer: {
     flexDirection: "row",
-    padding: 10,
+    padding: 5,
     flexDirection: "column",
     width: "100%",
     zIndex: 1000,
-    bottom: hp(30),
     paddingBottom: hp(5),
+    transform: [{ translateY: -150 }],
   },
+  recordingWaveLine: { height: 20 },
   textInput: {
     flex: 1,
     padding: hp(1),
