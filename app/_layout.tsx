@@ -4,7 +4,13 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Slot, Stack, useRouter, useSegments } from "expo-router";
+import {
+  Slot,
+  Stack,
+  useNavigation,
+  useRouter,
+  useSegments,
+} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
@@ -30,11 +36,11 @@ const MainLayout = () => {
     if (typeof isAuthenticated == "undefined") return;
     const inApp = segments[0] == "app";
     if (isAuthenticated && !inApp) {
-      router.replace("(tabs)");
+      router.replace("/(inApp)/(drawer)/(publicSquad)/exploreSquad");
     } else if (isAuthenticated == false) {
-      router.replace("(inApp)/Authentication/Authentication");
+      router.replace("/(inApp)/Authentication/Authentication");
     } else {
-      router.replace("(tabs)");
+      router.replace("/(inApp)/(drawer)/(publicSquad)/exploreSquad");
     }
   }, [isAuthenticated]);
 

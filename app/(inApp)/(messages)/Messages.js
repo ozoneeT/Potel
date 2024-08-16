@@ -978,9 +978,9 @@ const ChatRoom = () => {
       };
 
       setLinkMetadata(metadata);
-      console.log("Link metadata fetched:", metadata);
+      // console.log("Link metadata fetched:", metadata);
     } catch (error) {
-      console.error("Error fetching link metadata:", error);
+      // console.error("Error fetching link metadata:", error);
     }
   };
 

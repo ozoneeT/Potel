@@ -4,7 +4,7 @@ import { Stack } from "expo-router";
 
 const _layout = () => {
   return (
-    <Stack screenOptions={{ headerShown: false }} initialRouteName="(tabs)">
+    <Stack screenOptions={{ headerShown: false }} initialRouteName="(drawer)">
       <Stack.Screen
         name="(taskform)"
         options={{
