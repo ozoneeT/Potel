@@ -26,10 +26,12 @@ import {
   Animated,
   Dimensions,
   PanResponder,
+  Linking,
 } from "react-native";
 import {
   Entypo,
   FontAwesome,
+  FontAwesome5,
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
@@ -112,6 +114,11 @@ const ChatRoom = () => {
 
   const maxValues = 100;
   const compressionThreshold = maxValues * 0.8;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [sound, setSound] = useState(null);
+  const [recordingUri, setRecordingUri] = useState(null);
+  const [isRecordingPreview, setisRecordingPreview] = useState(false);
+  const domainLinksRef = useRef();
 
   // async function StartRecording() {
   //   console.log("start Recording");
@@ -219,6 +226,7 @@ const ChatRoom = () => {
 
     try {
       setIsRecording(false);
+      setisRecordingPreview(true);
       const recording = recordingRef.current;
 
       // Fetch the status and get the duration before stopping
@@ -245,24 +253,29 @@ const ChatRoom = () => {
 
       const uri = recording.getURI();
       if (uri) {
-        // Use the durationMillis obtained before stopping
-        const newVoiceMessage = {
-          id: messages.length + 1,
-          metering: audioMeteringRef.current,
-          type: "voice",
-          text: "Voice",
-          duration: formattedDuration,
-          uri: uri,
-          createdAt: new Date().toISOString(),
-          user: { id: "u1", name: "User" }, // assuming "u1" is the current user
-        };
+        setRecordingUri(uri);
 
-        setMessages((prevMessages) => [newVoiceMessage, ...prevMessages]);
-        flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+        // Use the durationMillis obtained before stopping
+        // const newVoiceMessage = {
+        //   id: messages.length + 1,
+        //   metering: audioMeteringRef.current,
+        //   type: "voice",
+        //   text: "Voice",
+        //   duration: formattedDuration,
+        //   uri: uri,
+        //   createdAt: new Date().toISOString(),
+        //   user: { id: "u1", name: "User" }, // assuming "u1" is the current user
+        // };
+
+        // setMessages((prevMessages) => [newVoiceMessage, ...prevMessages]);
+        // flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
       }
     } catch (err) {
       console.error("Failed to stop recording", err);
     } finally {
+      // Clear the waveform and reset recording reference
+
+      setMeteringValues([]); // Clear the waveform lines
       recordingRef.current = null; // Reset the recording reference
     }
   }
@@ -287,6 +300,13 @@ const ChatRoom = () => {
 
     return (
       <View style={styles.waveContainer}>
+        <TouchableOpacity onPress={playSound} style={{ padding: 5 }}>
+          <FontAwesome5
+            name={isPlaying ? "pause" : "play"}
+            size={20}
+            color={"gray"}
+          />
+        </TouchableOpacity>
         {lines.map((db, index) => (
           <View
             key={index}
@@ -299,12 +319,102 @@ const ChatRoom = () => {
                   [5, 50],
                   Extrapolate.CLAMP
                 ),
+                backgroundColor:
+                  progress > index / lines.length
+                    ? Colors.light.primary
+                    : "gainsboro",
               },
             ]}
           />
         ))}
+        <TouchableOpacity onPress={SendVoiceNote} style={{ padding: 5 }}>
+          <Text>Send</Text>
+        </TouchableOpacity>
       </View>
     );
+  };
+
+  const soundObjectRef = useRef(new Audio.Sound());
+  const [progress, setProgress] = useState(0);
+  const soundPositionRef = useRef(0); // Using useRef for sound position
+
+  const playSound = async () => {
+    const uri = recordingUri;
+
+    try {
+      if (!isPlaying) {
+        if (soundPositionRef.current === 0) {
+          console.log("Loading and playing recorded audio...");
+          await soundObjectRef.current.loadAsync({ uri });
+        }
+
+        await soundObjectRef.current.playFromPositionAsync(
+          soundPositionRef.current
+        );
+        setIsPlaying(true);
+
+        soundObjectRef.current.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded) {
+            soundPositionRef.current = status.positionMillis;
+            const currentProgress =
+              status.positionMillis / status.durationMillis; // Calculate progress
+            setProgress(currentProgress); // Update progress
+          }
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setProgress(0); // Reset progress after playback finishes
+            soundPositionRef.current = 0;
+            soundObjectRef.current.unloadAsync();
+          }
+        });
+      } else {
+        await soundObjectRef.current.pauseAsync();
+        setIsPlaying(false);
+      }
+    } catch (error) {
+      console.error("Failed to play or pause the recording", error);
+    }
+  };
+
+  React.useEffect(() => {
+    return sound
+      ? () => {
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
+
+  const SendVoiceNote = async () => {
+    try {
+      // Ensure sound object is unloaded before sending the voice note
+      if (soundObjectRef.current) {
+        await soundObjectRef.current.unloadAsync();
+      }
+
+      // Create and send the new voice message
+      const newVoiceMessage = {
+        id: messages.length + 1,
+        metering: audioMeteringRef.current,
+        type: "voice",
+        text: "Voice",
+        uri: recordingUri,
+        createdAt: new Date().toISOString(),
+        user: { id: "u1", name: "User" }, // assuming "u1" is the current user
+      };
+
+      setMessages((prevMessages) => [newVoiceMessage, ...prevMessages]);
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+
+      // Reset state for recording preview
+      setisRecordingPreview(false);
+
+      // Reset references and state for the next recording
+      setRecordingUri(null); // Clear the recording URI
+      soundObjectRef.current = new Audio.Sound(); // Create a new sound object
+      soundPositionRef.current = 0; // Reset position
+    } catch (error) {
+      console.error("Failed to send voice note and reset", error);
+    }
   };
 
   // const FinishedRecording = () => {
@@ -444,6 +554,7 @@ const ChatRoom = () => {
           createdAt: new Date().toISOString(),
           user: { id: "u1", name: "User" },
           repliedTo: replyingMessageId || null,
+          links: domainLinksRef.current, // Include detected links
         };
 
         return [newMsg, ...prevMessages];
@@ -519,48 +630,88 @@ const ChatRoom = () => {
 
     const renderMainMessage = (item) => {
       if (item.type === "text") {
+        // Define regex pattern for links
+        const linkPattern =
+          /(\b[a-zA-Z0-9.-]+)\.(com|net|org|co|io|me|tv|biz|info)\b/g;
+
+        // Function to process text and identify links
+        const processText = (text) => {
+          let parts = [];
+          let lastIndex = 0;
+
+          text.replace(linkPattern, (match, p1, p2, offset) => {
+            // Push text before the link
+            if (offset > lastIndex) {
+              parts.push({
+                text: text.slice(lastIndex, offset),
+                isLink: false,
+              });
+            }
+            // Push the link
+            parts.push({ text: match, isLink: true });
+            lastIndex = offset + match.length;
+            return match;
+          });
+
+          // Push the remaining text after the last link
+          if (lastIndex < text.length) {
+            parts.push({ text: text.slice(lastIndex), isLink: false });
+          }
+
+          return parts;
+        };
+
+        const segments = processText(item.text);
+
         return (
-          <>
-            <View
+          <View
+            style={[
+              isMyMessage(item)
+                ? {
+                    borderTopEndRadius: 20,
+                    borderTopStartRadius: 20,
+                    borderBottomLeftRadius: 20,
+                    backgroundColor: Colors.dark.primary,
+                  }
+                : {
+                    borderTopEndRadius: 20,
+                    borderTopStartRadius: 20,
+                    borderBottomRightRadius: 20,
+                    backgroundColor: "#ffffff",
+                  },
+              styles.messageContain,
+            ]}
+          >
+            <Text style={styles.messageText}>
+              {segments.map((segment, index) => (
+                <Text
+                  key={index}
+                  style={segment.isLink ? styles.linkText : styles.nonLinkText}
+                  onPress={() => {
+                    if (segment.isLink) {
+                      const formattedUrl = formatUrl(segment.text);
+                      Linking.openURL(formattedUrl).catch((err) => {
+                        console.error("Failed to open URL:", err);
+                        alert("Failed to open URL. Please check the link.");
+                      });
+                    }
+                  }}
+                >
+                  {segment.text}
+                </Text>
+              ))}
+            </Text>
+            <Text
               style={[
-                myMessage
-                  ? [
-                      {
-                        borderTopEndRadius: 20,
-                        borderTopStartRadius: 20,
-                        borderBottomLeftRadius: 20,
-                        backgroundColor: Colors.dark.primary,
-                      },
-                    ]
-                  : [
-                      {
-                        borderTopEndRadius: 20,
-                        borderTopStartRadius: 20,
-                        borderBottomRightRadius: 20,
-                        backgroundColor: "#ffffff",
-                      },
-                    ],
-                styles.mesageContain,
+                styles.messageTime,
+                isMyMessage(item)
+                  ? styles.myMessageTime
+                  : styles.otherMessageTime,
               ]}
             >
-              <Text
-                style={[
-                  styles.messageText,
-                  myMessage ? styles.myMessageText : styles.otherMessageText,
-                ]}
-              >
-                {item.text}
-              </Text>
-              <Text
-                style={[
-                  styles.messageTime,
-                  myMessage ? styles.myMessageTime : styles.otherMessageTime,
-                ]}
-              >
-                {dayjs(item.createdAt).format("h:mm A")}
-              </Text>
-            </View>
-          </>
+              {dayjs(item.createdAt).format("h:mm A")}
+            </Text>
+          </View>
         );
       }
 
@@ -581,12 +732,13 @@ const ChatRoom = () => {
               style={{ borderRadius: 15, width: "100%" }}
               aspectRatio={1}
             />
-
             <Text
               style={[
                 styles.messageTime,
                 { marginTop: 10 },
-                myMessage ? styles.myMessageTime : styles.otherMessageTime,
+                isMyMessage(item)
+                  ? styles.myMessageTime
+                  : styles.otherMessageTime,
               ]}
             >
               {dayjs(item.createdAt).format("h:mm A")}
@@ -791,19 +943,6 @@ const ChatRoom = () => {
   const [linkMetadata, setLinkMetadata] = useState();
   // Updated URL pattern to capture a broader range of domain suffixes
 
-  const urlPattern =
-    /(?:https?:\/\/|www\.)[^\s/$.?#].[^\s]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?/gi;
-
-  const formatUrl = (url) => {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-    if (url.startsWith("www.")) {
-      return `https://${url}`;
-    }
-    return `https://www.${url}`;
-  };
-
   const fetchLinkMetadata = async (url) => {
     try {
       const formattedUrl = formatUrl(url);
@@ -850,31 +989,48 @@ const ChatRoom = () => {
   const handleTextChange = (text) => {
     newMessageRef.current = text;
 
-    const urls = text.match(urlPattern);
-    const domainSuffixPattern = /\.(com|net|org|co|io|me|tv|biz|info)$/i;
+    // Define domain suffix pattern to identify domain suffixes
+    const domainSuffixPattern =
+      /(\b[a-zA-Z0-9.-]+)\.(com|net|org|co|io|me|tv|biz|info)\b/i;
 
-    if (domainSuffixPattern.test(text)) {
-      fetchLinkMetadata(`https://www.${text}`);
-    }
+    // Find all domain suffix matches in the text
+    const match = text.match(domainSuffixPattern);
 
-    if (urls && urls.length > 0) {
-      urls.forEach((url) => {
-        const formattedUrl = formatUrl(url);
-        fetchLinkMetadata(formattedUrl);
+    let detectedLinks = [];
+
+    if (match) {
+      // Extract the domain with the suffix
+      const domainWithSuffix = match[0];
+
+      // Ensure the URL is correctly formatted
+      const formattedUrl = formatUrl(domainWithSuffix);
+
+      // Fetch metadata for the formatted URL
+      fetchLinkMetadata(formattedUrl).catch((error) => {
+        console.error("Error fetching link metadata:", error);
       });
+
+      // Extract the domain with the suffix
+      detectedLinks = match.map((domainWithSuffix) =>
+        formatUrl(domainWithSuffix)
+      );
     } else {
       setLinkMetadata(null);
     }
 
+    // Store detected links in the ref
+    domainLinksRef.current = detectedLinks;
+
+    // Update typing state
     if (text.length > 0) {
       setTyping(true);
       setTypingText(true);
-    }
-    if (text.length == 0 && typing) {
+    } else if (typing) {
       setTyping(false);
       setTypingText(false);
     }
 
+    // Handle typing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -882,6 +1038,15 @@ const ChatRoom = () => {
     typingTimeoutRef.current = setTimeout(() => {
       setTypingText(false);
     }, 10000); // 10 seconds
+  };
+
+  // Helper function to format URLs
+  const formatUrl = (url) => {
+    // Ensure the URL starts with http or https
+    if (!/^https?:\/\//i.test(url)) {
+      url = `https://${url}`;
+    }
+    return url;
   };
 
   const bottomSheetRef = useRef(null);
@@ -932,7 +1097,7 @@ const ChatRoom = () => {
   return (
     <>
       <View style={{ overflow: "hidden" }}>
-        <LinearGradient colors={["#ece9e6", "#efefef"]}>
+        <LinearGradient colors={["#ece9e6", "#059ff2"]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ height: "100%" }}
@@ -1114,7 +1279,7 @@ const ChatRoom = () => {
                       </View>
                     </View>
                   )}
-                  {!isRecording && (
+                  {isRecordingPreview && (
                     <FinishedRecording
                       meteringData={audioMeteringRef.current}
                     />
@@ -1252,7 +1417,7 @@ const styles = StyleSheet.create({
     paddingBottom: hp(5),
     transform: [{ translateY: -150 }],
   },
-  recordingWaveLine: { height: 20 },
+  recordingWaveLine: { height: 20, borderRadius: 30 },
   textInput: {
     flex: 1,
     padding: hp(1),
@@ -1283,7 +1448,7 @@ const styles = StyleSheet.create({
 
     // marginRight: 20,
   },
-  mesageContain: {
+  messageContain: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
@@ -1300,9 +1465,15 @@ const styles = StyleSheet.create({
     marginRight: "20%",
   },
   messageText: {
-    fontSize: 16,
     padding: 10,
-    flexShrink: 1,
+  },
+  nonLinkText: {
+    fontSize: 16,
+  },
+  linkText: {
+    fontSize: 16,
+    color: "blue",
+    textDecorationLine: "underline",
   },
   myMessageText: {
     color: Colors.light.text,
@@ -1533,7 +1704,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     width: 3,
     marginHorizontal: 1,
-    backgroundColor: Colors.light.primary, // Adjust based on your theme
     borderRadius: 2,
   },
 });
