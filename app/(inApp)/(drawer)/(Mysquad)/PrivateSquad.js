@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 
-const yourSquad = () => {
+const PrivateSquad = () => {
   return (
     <View>
-      <Text>yourSquad</Text>
+      <Text>PrivateSquad</Text>
     </View>
   );
 };
 
-export default yourSquad;
+export default PrivateSquad;
 
 const styles = StyleSheet.create({});

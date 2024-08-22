@@ -36,11 +36,11 @@ const MainLayout = () => {
     if (typeof isAuthenticated == "undefined") return;
     const inApp = segments[0] == "app";
     if (isAuthenticated && !inApp) {
-      router.replace("/(inApp)/(drawer)/(publicSquad)/exploreSquad");
+      router.replace("/(inApp)/(drawer)/(Squad)/ExploreSquad");
     } else if (isAuthenticated == false) {
       router.replace("/(inApp)/Authentication/Authentication");
     } else {
-      router.replace("/(inApp)/(drawer)/(publicSquad)/exploreSquad");
+      router.replace("/(inApp)/(drawer)/(Squad)/ExploreSquad");
     }
   }, [isAuthenticated]);
 

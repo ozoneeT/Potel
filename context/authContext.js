@@ -43,9 +43,9 @@ export const AuthContextProvider = ({ children }) => {
     const unsub = onAuthStateChanged(auth, (user) => {
       // console.log("got User", user);
       if (user) {
-        updateUserData(user.uid);
+        // updateUserData(user.uid);
         setIsAuthenticated(true);
-        setUser(user);
+        // setUser(user);
       } else {
         setIsAuthenticated(false);
         setUser(null);

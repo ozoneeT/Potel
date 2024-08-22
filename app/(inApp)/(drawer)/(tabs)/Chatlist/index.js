@@ -9,6 +9,7 @@ import {
   Image,
   ScrollView,
   SafeAreaView,
+  useColorScheme,
 } from "react-native";
 import { Link, router, useNavigation } from "expo-router";
 import Animated, {
@@ -33,6 +34,8 @@ import Card from "@/components/Card";
 
 const Messaging = () => {
   const navigation = useNavigation();
+  const Header = useHeaderHeight();
+  const colorScheme = useColorScheme();
 
   const Chats = React.memo(({ item }) => {
     const headerHight = useHeaderHeight();
@@ -42,6 +45,7 @@ const Messaging = () => {
     const isToday = currentDate.isSame(today, "day");
     const isYesterday = currentDate.isSame(yesterday, "day");
     const isCurrentWeek = currentDate.isSame(today, "week");
+    const colorScheme = useColorScheme();
 
     let formattedDate = "";
 
@@ -82,15 +86,29 @@ const Messaging = () => {
             />
           </View>
           <View style={styles.chatMessage}>
-            <Text style={{ fontWeight: "bold", fontSize: 17 }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                fontSize: 17,
+                color: colorScheme === "light" ? "#111111" : "#ffffff",
+              }}
+            >
               {item.from}
             </Text>
-            <Text numberOfLines={2} ellipsizeMode="tail">
+            <Text
+              numberOfLines={2}
+              ellipsizeMode="tail"
+              style={{ color: colorScheme === "light" ? "#111111" : "#ffffff" }}
+            >
               {item.msg}
             </Text>
           </View>
           <View style={styles.chatTime}>
-            <Text>{formattedDate}</Text>
+            <Text
+              style={{ color: colorScheme === "light" ? "#111111" : "#ffffff" }}
+            >
+              {formattedDate}
+            </Text>
           </View>
         </Pressable>
         {/* </Link> */}
@@ -104,8 +122,8 @@ const Messaging = () => {
     <View style={{ flex: 1 }}>
       <FlashList
         estimatedItemSize={500}
+        contentInsetAdjustmentBehavior="automatic"
         data={chats}
-        keyboardDismissMode="on-drag"
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <Chats item={item} navigation={navigation} />}
         ListHeaderComponent={
@@ -147,7 +165,7 @@ const Messaging = () => {
         }
         contentContainerStyle={{
           paddingBottom: 40,
-          backgroundColor: "#fff",
+          backgroundColor: colorScheme === "dark" ? "#111111" : "#ffffff",
         }}
       />
     </View>

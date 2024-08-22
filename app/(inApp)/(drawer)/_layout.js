@@ -1,6 +1,7 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { BlurView } from "expo-blur";
 
 export default function Layout() {
   return (
@@ -9,12 +10,24 @@ export default function Layout() {
         screenOptions={{
           swipeEdgeWidth: 100,
         }}
-        initialRouteName="(publicSquad)"
+        initialRouteName="(Squad)"
       >
         <Drawer.Screen
-          name="(publicSquad)"
+          name="(Squad)"
           options={{
             headerTitle: "Squad",
+            headerShown: false,
+            // headerTransparent: true,
+            // headerBlurEffect: "regular",
+            // headerBackground: () => (
+            //   <BlurView
+            //     intensity={80}
+            //     tint="dark"
+            //     style={{
+            //       ...StyleSheet.absoluteFillObject,
+            //     }}
+            //   />
+            // ),
             headerRight: () => (
               <View style={{}}>
                 <Pressable style={{ paddingHorizontal: 15 }}>
