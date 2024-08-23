@@ -5,14 +5,19 @@ import {
   Text,
   View,
   ViewToken,
+  Animated,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import Animated, {
+import {
+  runOnJS,
   useAnimatedRef,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useDerivedValue,
   useScrollViewOffset,
   useSharedValue,
 } from "react-native-reanimated";
-import React, { useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   CategoryListItem,
@@ -24,52 +29,129 @@ import { ListItem } from "@/components/SquadCategory/listItem";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { BlurView } from "expo-blur";
 
-export const categoryItem = [
+export const squadData = [
   {
-    image: require("@/assets/images/icon.png"),
-    gradient: ["#4c669f", "#3b5998", "#192f6a"],
-    header: "General",
+    squadCategory: "Category 1",
+    gradient: ["#12c2e9", "#c471ed", "#f64f59"],
+    squads: [
+      { header: "General", image: require("@/assets/images/icon.png") },
+      { header: "Community", image: require("@/assets/images/BG.png") },
+      { header: "Work", image: require("@/assets/images/profile.jpeg") },
+      { header: "Random", image: require("@/assets/images/potel.png") },
+      { header: "Personal", image: require("@/assets/images/sun.png") },
+      { header: "Health", image: require("@/assets/images/welcome.png") },
+      { header: "Travel", image: require("@/assets/images/potelbot.png") },
+      { header: "Fitness", image: require("@/assets/images/icon.png") },
+      { header: "Education", image: require("@/assets/images/BG.png") },
+      {
+        header: "Entertainment",
+        image: require("@/assets/images/profile.jpeg"),
+      },
+      { header: "Technology", image: require("@/assets/images/potel.png") },
+      { header: "Food", image: require("@/assets/images/sun.png") },
+      { header: "Music", image: require("@/assets/images/welcome.png") },
+      { header: "Fashion", image: require("@/assets/images/potelbot.png") },
+      { header: "Lifestyle", image: require("@/assets/images/icon.png") },
+      { header: "Business", image: require("@/assets/images/BG.png") },
+      { header: "Finance", image: require("@/assets/images/profile.jpeg") },
+      { header: "Science", image: require("@/assets/images/potel.png") },
+      { header: "Art", image: require("@/assets/images/sun.png") },
+      { header: "History", image: require("@/assets/images/welcome.png") },
+    ],
   },
   {
-    image: require("@/assets/images/BG.png"),
-    gradient: ["#b92b27", "#1565C0"], // Fixed double #
-    header: "Community",
+    squadCategory: "Category 2",
+    gradient: ["#b92b27", "#1565C0"],
+    squads: [
+      { header: "General", image: require("@/assets/images/icon.png") },
+      { header: "Community", image: require("@/assets/images/BG.png") },
+      { header: "Work", image: require("@/assets/images/profile.jpeg") },
+      { header: "Random", image: require("@/assets/images/potel.png") },
+      { header: "Personal", image: require("@/assets/images/sun.png") },
+      { header: "Health", image: require("@/assets/images/welcome.png") },
+      { header: "Travel", image: require("@/assets/images/potelbot.png") },
+      { header: "Fitness", image: require("@/assets/images/icon.png") },
+      { header: "Education", image: require("@/assets/images/BG.png") },
+      {
+        header: "Entertainment",
+        image: require("@/assets/images/profile.jpeg"),
+      },
+      { header: "Technology", image: require("@/assets/images/potel.png") },
+      { header: "Food", image: require("@/assets/images/sun.png") },
+      { header: "Music", image: require("@/assets/images/welcome.png") },
+      { header: "Fashion", image: require("@/assets/images/potelbot.png") },
+      { header: "Lifestyle", image: require("@/assets/images/icon.png") },
+      { header: "Business", image: require("@/assets/images/BG.png") },
+      { header: "Finance", image: require("@/assets/images/profile.jpeg") },
+      { header: "Science", image: require("@/assets/images/potel.png") },
+      { header: "Art", image: require("@/assets/images/sun.png") },
+      { header: "History", image: require("@/assets/images/welcome.png") },
+    ],
   },
   {
-    image: require("@/assets/images/profile.jpeg"),
-    gradient: ["#12c2e9", "#c471ed", "#f64f59"], // Fixed double #
-    header: "Work",
-  },
-  {
-    image: require("@/assets/images/potel.png"),
-    gradient: ["#FC466B", "#3F5EFB"], // Fixed double #
-    header: "Random",
-  },
-  {
-    image: require("@/assets/images/sun.png"),
-    gradient: ["#59C173", "#a17fe0", "#5D26C1"],
-    header: "Personal",
-  },
-  {
-    image: require("@/assets/images/welcome.png"),
-    gradient: ["#8360c3", "#2ebf91"],
-    header: "Health",
-  },
-  {
-    image: require("@/assets/images/potelbot.png"),
-    gradient: ["#f953c6", "#b91d73"],
-    header: "Travel",
+    squadCategory: "Category 3",
+    gradient: ["#12c2e9", "#c471ed"],
+    squads: [
+      { header: "General", image: require("@/assets/images/icon.png") },
+      { header: "Community", image: require("@/assets/images/BG.png") },
+      { header: "Work", image: require("@/assets/images/profile.jpeg") },
+      { header: "Random", image: require("@/assets/images/potel.png") },
+      { header: "Personal", image: require("@/assets/images/sun.png") },
+      { header: "Health", image: require("@/assets/images/welcome.png") },
+      { header: "Travel", image: require("@/assets/images/potelbot.png") },
+      { header: "Fitness", image: require("@/assets/images/icon.png") },
+      { header: "Education", image: require("@/assets/images/BG.png") },
+      {
+        header: "Entertainment",
+        image: require("@/assets/images/profile.jpeg"),
+      },
+      { header: "Technology", image: require("@/assets/images/potel.png") },
+      { header: "Food", image: require("@/assets/images/sun.png") },
+      { header: "Music", image: require("@/assets/images/welcome.png") },
+      { header: "Fashion", image: require("@/assets/images/potelbot.png") },
+      { header: "Lifestyle", image: require("@/assets/images/icon.png") },
+      { header: "Business", image: require("@/assets/images/BG.png") },
+      { header: "Finance", image: require("@/assets/images/profile.jpeg") },
+      { header: "Science", image: require("@/assets/images/potel.png") },
+      { header: "Art", image: require("@/assets/images/sun.png") },
+      { header: "History", image: require("@/assets/images/welcome.png") },
+    ],
   },
 ];
+
 const data = new Array(50).fill(0).map((_, index) => ({ id: index }));
 const App = () => {
   const animatedRef = useAnimatedRef<Animated.ScrollView>();
-  const scrollOffset = useScrollViewOffset(animatedRef);
+  // const scrollOffset = useScrollViewOffset(animatedRef);
   const viewableItems = useSharedValue<ViewToken[]>([]);
+  const scrollOffset = useSharedValue(0);
+  const gradientSharedValue = useSharedValue(["#000", "#000"]);
+  const [activeGradient, setActiveGradient] = useState<string[]>([
+    "#000",
+    "#000",
+  ]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = ["50%", "70%"];
-  const activeCategoryIndex = useSharedValue(0);
+  // Handle scroll event
+  // Calculate gradient directly in useAnimatedStyle
 
+  // Handle scroll event
+  const handleScroll = (event) => {
+    scrollOffset.value = event.nativeEvent.contentOffset.x;
+  };
+  // const activeIndex = useDerivedValue(() => {
+  //   return scrollOffset.value / StoryListItemWidth;
+  // }, [scrollOffset]);
+
+  // const activeGradientValue = useDerivedValue(() => {
+  //   const index = Math.round(activeIndex.value);
+  //   // console.log("Gradient index:", index); // Log the index used to fetch gradient
+  //   // console.log("Category item:", categoryItem[index]); // Log the category item at the index
+  //   return categoryItem[index]?.gradient || ["#000", "#000"];
+  // }, [activeIndex]);
+
+  // Update gradient in the parent component
+
+  const snapPoints = ["50%", "70%"];
   // useDerivedValue(() => {
   //   console.log(scrollOffset.value);
   // });
@@ -84,7 +166,8 @@ const App = () => {
 
       <FlatList
         contentInsetAdjustmentBehavior="automatic"
-        data={data}
+        data={squadData}
+        keyExtractor={(item, index) => index.toString()}
         onViewableItemsChanged={({ viewableItems: vItems }) => {
           viewableItems.value = vItems;
         }}
@@ -100,41 +183,45 @@ const App = () => {
               horizontal
               snapToInterval={StoryListItemWidth}
               decelerationRate={"fast"}
+              onScroll={handleScroll}
               disableIntervalMomentum
               showsHorizontalScrollIndicator={false}
               scrollEventThrottle={16} // 1/60fps = 16ms
               contentContainerStyle={{
-                width: StoryListItemWidth * categoryItem.length + ListPadding,
+                width: StoryListItemWidth * squadData.length + ListPadding,
               }}
             >
-              {categoryItem.map((story, index) => {
+              {squadData.map((category, index) => {
                 return (
                   <CategoryListItem
                     index={index}
-                    imageSource={story.image}
+                    imageSource={category.squads[0]?.image} // Use the first squad's image as representative
                     key={index}
                     scrollOffset={scrollOffset}
-                    gradient={story.gradient}
-                    header={story.header}
-                    activeCategoryIndex={activeCategoryIndex}
+                    gradient={category.gradient}
+                    header={category.squadCategory}
                   />
                 );
               })}
             </Animated.ScrollView>
           </View>
         )}
-        renderItem={({ item }) => {
-          return (
-            <Pressable onPress={openBottomSheet}>
-              <ListItem
-                item={item}
-                viewableItems={viewableItems}
-                activeCategoryIndex={activeCategoryIndex}
-                gradient={categoryItem[activeCategoryIndex.value].gradient}
-              />
-            </Pressable>
-          );
-        }}
+        renderItem={({ item }) => (
+          <View>
+            {item.squads.map((squad, squadIndex) => (
+              <Pressable
+                onPress={() => openBottomSheet(squad)}
+                key={squadIndex}
+              >
+                <ListItem
+                  item={squad}
+                  viewableItems={viewableItems}
+                  gradient={item.gradient} // Use the category's gradient
+                />
+              </Pressable>
+            ))}
+          </View>
+        )}
       />
       <BottomSheet
         ref={bottomSheetRef}

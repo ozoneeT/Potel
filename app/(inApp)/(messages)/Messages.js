@@ -1097,7 +1097,7 @@ const ChatRoom = () => {
   return (
     <>
       <View style={{ overflow: "hidden" }}>
-        <LinearGradient colors={["#ece9e6", "#059ff2"]}>
+        <LinearGradient colors={["#ece9e6", "#e1e6e6"]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ height: "100%" }}

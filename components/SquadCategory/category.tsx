@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedRef,
   useScrollViewOffset,
+  useDerivedValue,
 } from "react-native-reanimated";
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -31,17 +32,10 @@ export const CategoryListItem: React.FC<CategoryListItemProps> = ({
   header,
   index,
   scrollOffset,
-  activeCategoryIndex, // Receive the shared value
 }) => {
   const rContainerStyle = useAnimatedStyle(() => {
     const activeIndex = scrollOffset.value / StoryListItemWidth;
-
-    if (Math.round(activeIndex) === index) {
-      activeCategoryIndex.value = index;
-    }
-
     const paddingLeft = (WindowWidth - StoryListItemWidth) / 4;
-
     const translateX = interpolate(
       activeIndex,
       [index - 2, index - 1, index, index + 1], // input range [-1 ,0 , 1]
@@ -55,7 +49,6 @@ export const CategoryListItem: React.FC<CategoryListItemProps> = ({
       [0.5, 0.86, 1, 1], // output range
       Extrapolation.CLAMP
     );
-
     return {
       left: paddingLeft,
       transform: [

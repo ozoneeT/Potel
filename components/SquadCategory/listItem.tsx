@@ -19,38 +19,29 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { categoryItem } from "@/app/(inApp)/(drawer)/(Squad)/ExploreSquad";
 
 type ListItemProps = {
   viewableItems: Animated.SharedValue<ViewToken[]>;
   item: {
     id: number;
   };
-  activeCategoryIndex: Animated.SharedValue<number>;
-  gradient: string[]; // This is the gradient for the active category
+  activeGradient: string[];
 };
 
 const ListItem: React.FC<ListItemProps> = React.memo(
-  ({ item, viewableItems, activeCategoryIndex, gradient }) => {
+  ({ item, viewableItems, gradient }) => {
     const dummyMemberImage = [
       require("@/assets/images/icon.png"),
       require("@/assets/images/icon.png"),
       require("@/assets/images/icon.png"),
       require("@/assets/images/icon.png"),
     ];
-
     const rStyle = useAnimatedStyle(() => {
       const isVisible = Boolean(
         viewableItems.value
           .filter((item) => item.isViewable)
           .find((viewableItem) => viewableItem.item.id === item.id)
       );
-      const interpolatedGradient = interpolateColor(
-        activeCategoryIndex.value,
-        [0, 1, 2, 3, 4, 5, 6], // Indices of your categories
-        categoryItem.map((item) => item.gradient[0])
-      );
-
       // console.log(interpolatedGradient);
       return {
         opacity: withTiming(isVisible ? 1 : 0.5),
@@ -64,82 +55,13 @@ const ListItem: React.FC<ListItemProps> = React.memo(
     // const hp = Dimensions.get("window").height * 0.15; // 30% of the height
     return (
       <Animated.View style={[rStyle, styles.container]}>
-        {/* <LinearGradient
-          colors={["#12c2e9", "#c471ed", "#f64f59"]}
-          style={[styles.Card, { height: hp("20%"), marginVertical: 5 }]}
-        >
-          <View style={[styles.subCard, { height: hp("19.2%") }]}>
-            <View style={styles.cardImages}>
-              <Image
-                style={{
-                  width: 70,
-                  height: 70,
-                  borderRadius: 50,
-                  // transform: [{ translateY: -20 }],
-
-                  borderWidth: 2,
-                  borderColor: "#030303",
-                }}
-                source={dummyMemberImage}
-                resizeMode="center"
-              />
-
-              {/* <View style={styles.memberContainer}>
-                {dummyMemberImage.map((image, index) => (
-                  <Image
-                    key={index}
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 25,
-                      marginLeft: index === 0 ? 0 : -15,
-                    }}
-                    source={image}
-                  />
-                ))}
-                <View>
-                  <Text style={styles.memberNumber}>706</Text>
-                </View>
-              </View> */}
-        {/* </View>
-            <View style={styles.cardText}>
-              <Text style={styles.squadName}>Gamer Club</Text>
-              <Text style={styles.squadHandle}>@GamersClub</Text>
-              <Text style={styles.squadDescription} numberOfLines={1}>
-                A place where all game developers are welcomed to discuss,
-                connect to unleash their creativity by helping each other.
-              </Text>
-            </View> */}
-        {/* <LinearGradient
-              colors={["#12c2e9", "#c471ed", "#f64f59"]}
-              style={styles.CardButtonGradient}
-              start={{ x: 0.2, y: 0.5 }}
-            >
-              <Pressable style={styles.CardButton}>
-                <Text style={styles.ButtonText}>Join Squad</Text>
-              </Pressable>
-            </LinearGradient> */}
-        {/* </View> */}
-        {/* // </LinearGradient> */}
-
         <LinearGradient
-          colors={["#12c2e9", "#c471ed", "#f64f59"]} // Gradient colors
+          colors={gradient} // Gradient colors
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradientBorder}
         >
           <View style={styles.innerBox}>
-            {/* <Image
-              style={{
-                width: "120%",
-                height: "130%",
-                position: "absolute",
-              }}
-              source={{
-                uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfZplMhm_CtXC-BGkmzmB0zZLSjScsmw5mk8j048TNwvrsDeFjqNVEZ5WCkBTulfVmsXs&usqp=CAU",
-              }}
-              contentFit="cover"
-            /> */}
             <View style={styles.cardImages}>
               <Image
                 style={{
@@ -155,25 +77,9 @@ const ListItem: React.FC<ListItemProps> = React.memo(
                 contentFit="cover"
               />
             </View>
-            {/* <View style={styles.memberContainer}>
-              {dummyMemberImage.map((image, index) => (
-                <Image
-                  key={index}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 25,
-                    marginLeft: index === 0 ? 0 : -15,
-                  }}
-                  source={image}
-                />
-              ))}
-              <View>
-                <Text style={styles.memberNumber}>706</Text>
-              </View>
-            </View> */}
+
             <View style={styles.cardText}>
-              <Text style={styles.squadName}>Gamer Club</Text>
+              <Text style={styles.squadName}>{item.header}</Text>
               <Text style={styles.squadHandle}>@GamersClub</Text>
               <Text style={styles.squadDescription} numberOfLines={2}>
                 A place where all game developers are welcomed to discuss,
